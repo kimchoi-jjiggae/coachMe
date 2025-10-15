@@ -1,0 +1,17 @@
+{
+  "name": "voice-journal-pwa",
+  "version": "1.0.0",
+  "description": "A PWA for voice conversations with LLM for daily journaling",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8000",
+    "dev": "python -m http.server 8000"
+  },
+  "keywords": ["pwa", "voice", "journal", "llm", "chat"],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  }
+}

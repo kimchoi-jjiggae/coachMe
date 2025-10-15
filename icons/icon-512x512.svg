@@ -1,0 +1,29 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4f46e5;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="252" fill="url(#grad1)" stroke="#ffffff" stroke-width="2"/>
+  
+  <!-- Microphone icon -->
+  <g transform="translate(256, 256)">
+    <!-- Microphone body -->
+    <rect x="-20.48" y="-42.666666666666664" width="42.666666666666664" height="64" rx="20.48" fill="#ffffff"/>
+    
+    <!-- Microphone stand -->
+    <rect x="-4.096" y="20.48" width="8.533333333333333" height="32" fill="#ffffff"/>
+    
+    <!-- Microphone base -->
+    <rect x="-32" y="25.6" width="64" height="8.533333333333333" rx="4.096" fill="#ffffff"/>
+    
+    <!-- Sound waves -->
+    <g opacity="0.7">
+      <path d="M 64 0 Q 85.33333333333333 -20.48 102.4 0 Q 85.33333333333333 20.48 64 0" fill="none" stroke="#ffffff" stroke-width="4.096"/>
+      <path d="M 85.33333333333333 0 Q 102.4 -25.6 128 0 Q 102.4 25.6 85.33333333333333 0" fill="none" stroke="#ffffff" stroke-width="3.4133333333333336"/>
+    </g>
+  </g>
+</svg>

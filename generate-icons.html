@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator</title>
+</head>
+<body>
+    <h1>Voice Journal Icon Generator</h1>
+    <p>This page will help generate the required PWA icons. For now, you can use the SVG icon as a base.</p>
+    
+    <div id="icons">
+        <h2>Required Icon Sizes:</h2>
+        <ul>
+            <li>72x72px</li>
+            <li>96x96px</li>
+            <li>128x128px</li>
+            <li>144x144px</li>
+            <li>152x152px</li>
+            <li>192x192px</li>
+            <li>384x384px</li>
+            <li>512x512px</li>
+        </ul>
+        
+        <p><strong>Note:</strong> You can use online tools like <a href="https://realfavicongenerator.net/" target="_blank">RealFaviconGenerator</a> or <a href="https://www.favicon-generator.org/" target="_blank">Favicon Generator</a> to convert the SVG to different PNG sizes.</p>
+        
+        <p>For now, the app will work with the SVG icon, but for full PWA functionality, you'll need the PNG versions.</p>
+    </div>
+    
+    <script>
+        // Simple icon generation using canvas
+        function generateIcon(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Create gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#6366f1');
+            gradient.addColorStop(1, '#4f46e5');
+            
+            // Draw background circle
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size/2 - 4, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // Draw microphone
+            const scale = size / 512;
+            const centerX = size / 2;
+            const centerY = size / 2;
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(centerX - 20*scale, centerY - 40*scale, 40*scale, 60*scale);
+            ctx.fillRect(centerX - 4*scale, centerY + 20*scale, 8*scale, 30*scale);
+            ctx.fillRect(centerX - 30*scale, centerY + 50*scale, 60*scale, 8*scale);
+            
+            return canvas.toDataURL('image/png');
+        }
+        
+        // Generate icons for download
+        function downloadIcon(size) {
+            const dataUrl = generateIcon(size);
+            const link = document.createElement('a');
+            link.download = `icon-${size}x${size}.png`;
+            link.href = dataUrl;
+            link.click();
+        }
+        
+        // Add download buttons for each size
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        const container = document.getElementById('icons');
+        
+        sizes.forEach(size => {
+            const button = document.createElement('button');
+            button.textContent = `Download ${size}x${size}`;
+            button.onclick = () => downloadIcon(size);
+            button.style.margin = '5px';
+            container.appendChild(button);
+        });
+    </script>
+</body>
+</html>
