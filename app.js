@@ -185,7 +185,13 @@ class VoiceJournal {
         this.recognition = null;
         this.mediaRecorder = null;
         this.audioChunks = [];
-        this.apiKey = localStorage.getItem('openai_api_key') || '';
+        
+        // Load configuration from my-keys.js, config.js, or localStorage (in order of priority)
+        this.apiKey = window.MY_KEYS?.OPENAI_API_KEY || window.CONFIG?.OPENAI_API_KEY || localStorage.getItem('openai_api_key') || '';
+        this.supabaseUrl = window.MY_KEYS?.SUPABASE_URL || window.CONFIG?.SUPABASE_URL || localStorage.getItem('supabase_url') || '';
+        this.supabaseKey = window.MY_KEYS?.SUPABASE_ANON_KEY || window.CONFIG?.SUPABASE_ANON_KEY || localStorage.getItem('supabase_anon_key') || '';
+        this.autoListen = window.MY_KEYS?.AUTO_START_VOICE || window.CONFIG?.AUTO_START_VOICE || localStorage.getItem('autoListen') === 'true';
+        
         this.conversations = JSON.parse(localStorage.getItem('conversations') || '[]');
         this.currentConversation = [];
         this.supabase = null;
@@ -703,8 +709,12 @@ class VoiceJournal {
         document.getElementById('settingsModal').classList.add('open');
         document.getElementById('apiKey').value = this.apiKey;
         document.getElementById('autoListen').checked = this.autoListen;
-        document.getElementById('supabaseUrl').value = localStorage.getItem('supabase_url') || '';
-        document.getElementById('supabaseKey').value = localStorage.getItem('supabase_anon_key') || '';
+        document.getElementById('supabaseUrl').value = this.supabaseUrl;
+        document.getElementById('supabaseKey').value = this.supabaseKey;
+        
+        // Show if config is loaded from file
+        const configSource = window.CONFIG ? ' (from config.js)' : ' (from settings)';
+        document.querySelector('.modal-header h3').textContent = 'Settings' + configSource;
     }
 
     closeSettings() {
@@ -818,14 +828,11 @@ class VoiceJournal {
 
     async setupSupabase() {
         // Check if Supabase is configured
-        const supabaseUrl = localStorage.getItem('supabase_url');
-        const supabaseKey = localStorage.getItem('supabase_anon_key');
-        
-        if (supabaseUrl && supabaseKey) {
+        if (this.supabaseUrl && this.supabaseKey && this.supabaseUrl !== 'https://your-project.supabase.co') {
             try {
                 // Dynamically import Supabase
                 const { createClient } = await import('https://cdn.skypack.dev/@supabase/supabase-js@2');
-                this.supabase = createClient(supabaseUrl, supabaseKey);
+                this.supabase = createClient(this.supabaseUrl, this.supabaseKey);
                 this.supabaseEnabled = true;
                 
                 // Initialize journal service

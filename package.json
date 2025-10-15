@@ -4,8 +4,10 @@
   "description": "A PWA for voice conversations with LLM for daily journaling",
   "main": "index.html",
   "scripts": {
-    "start": "python -m http.server 8000",
-    "dev": "python -m http.server 8000"
+    "start": "node server.js",
+    "dev": "node server.js",
+    "setup": "node setup-config.js",
+    "serve": "python3 -m http.server 8000"
   },
   "keywords": [
     "pwa",
