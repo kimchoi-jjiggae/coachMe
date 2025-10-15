@@ -92,6 +92,16 @@
                         <input type="checkbox" id="autoListen">
                         <small>Automatically start listening when the app loads</small>
                     </div>
+                    <div class="setting-group">
+                        <label for="supabaseUrl">Supabase URL:</label>
+                        <input type="url" id="supabaseUrl" placeholder="https://your-project.supabase.co">
+                        <small>Your Supabase project URL for cloud sync</small>
+                    </div>
+                    <div class="setting-group">
+                        <label for="supabaseKey">Supabase Anon Key:</label>
+                        <input type="password" id="supabaseKey" placeholder="Your Supabase anon key">
+                        <small>Your Supabase anonymous key for authentication</small>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button id="saveSettings" class="btn btn-primary">Save Settings</button>

@@ -1,3 +1,183 @@
+// Journal Service for Supabase integration
+class JournalService {
+    constructor(supabase) {
+        this.supabase = supabase;
+    }
+
+    // Save a conversation to Supabase
+    async saveConversation(conversation) {
+        try {
+            const { data, error } = await this.supabase
+                .from('conversations')
+                .insert([{
+                    id: conversation.id,
+                    user_id: await this.getUserId(),
+                    date: conversation.date,
+                    title: this.generateTitle(conversation.userMessage),
+                    created_at: conversation.timestamp,
+                    updated_at: new Date().toISOString()
+                }])
+                .select()
+
+            if (error) throw error
+
+            // Save individual messages
+            await this.saveMessages(conversation.id, conversation.messages)
+            
+            return data[0]
+        } catch (error) {
+            console.error('Error saving conversation:', error)
+            throw error
+        }
+    }
+
+    // Save messages for a conversation
+    async saveMessages(conversationId, messages) {
+        try {
+            const messageData = messages.map(msg => ({
+                conversation_id: conversationId,
+                role: msg.role,
+                content: msg.content,
+                timestamp: msg.timestamp,
+                created_at: new Date().toISOString()
+            }))
+
+            const { error } = await this.supabase
+                .from('messages')
+                .insert(messageData)
+
+            if (error) throw error
+        } catch (error) {
+            console.error('Error saving messages:', error)
+            throw error
+        }
+    }
+
+    // Get all conversations for a user
+    async getConversations() {
+        try {
+            const userId = await this.getUserId()
+            
+            const { data, error } = await this.supabase
+                .from('conversations')
+                .select(`
+                  *,
+                  messages (*)
+                `)
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false })
+
+            if (error) throw error
+            return data || []
+        } catch (error) {
+            console.error('Error fetching conversations:', error)
+            return []
+        }
+    }
+
+    // Search conversations
+    async searchConversations(query) {
+        try {
+            const userId = await this.getUserId()
+            
+            const { data, error } = await this.supabase
+                .from('conversations')
+                .select(`
+                  *,
+                  messages (*)
+                `)
+                .eq('user_id', userId)
+                .or(`title.ilike.%${query}%,messages.content.ilike.%${query}%`)
+                .order('created_at', { ascending: false })
+
+            if (error) throw error
+            return data || []
+        } catch (error) {
+            console.error('Error searching conversations:', error)
+            return []
+        }
+    }
+
+    // Get or create user ID (using device fingerprint)
+    async getUserId() {
+        let userId = localStorage.getItem('voice_journal_user_id')
+        
+        if (!userId) {
+            // Generate a unique user ID based on device characteristics
+            userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+            localStorage.setItem('voice_journal_user_id', userId)
+        }
+        
+        return userId
+    }
+
+    // Generate a title for the conversation
+    generateTitle(userMessage) {
+        const words = userMessage.split(' ').slice(0, 5)
+        return words.join(' ') + (userMessage.split(' ').length > 5 ? '...' : '')
+    }
+
+    // Sync local data with Supabase
+    async syncLocalData() {
+        try {
+            const localConversations = JSON.parse(localStorage.getItem('conversations') || '[]')
+            
+            for (const conversation of localConversations) {
+                // Check if conversation already exists in Supabase
+                const existing = await this.getConversation(conversation.id)
+                
+                if (!existing) {
+                    // Convert local format to Supabase format
+                    const supabaseConversation = {
+                        id: conversation.id,
+                        date: conversation.date,
+                        title: this.generateTitle(conversation.userMessage),
+                        timestamp: conversation.timestamp,
+                        messages: [
+                            {
+                                role: 'user',
+                                content: conversation.userMessage,
+                                timestamp: conversation.timestamp
+                            },
+                            {
+                                role: 'assistant',
+                                content: conversation.aiResponse,
+                                timestamp: conversation.timestamp
+                            }
+                        ]
+                    }
+                    
+                    await this.saveConversation(supabaseConversation)
+                }
+            }
+            
+            console.log('Local data synced with Supabase')
+        } catch (error) {
+            console.error('Error syncing local data:', error)
+        }
+    }
+
+    // Get a specific conversation with messages
+    async getConversation(conversationId) {
+        try {
+            const { data, error } = await this.supabase
+                .from('conversations')
+                .select(`
+                  *,
+                  messages (*)
+                `)
+                .eq('id', conversationId)
+                .single()
+
+            if (error) throw error
+            return data
+        } catch (error) {
+            console.error('Error fetching conversation:', error)
+            return null
+        }
+    }
+}
+
 // Voice Journal PWA - Main Application
 class VoiceJournal {
     constructor() {
@@ -8,6 +188,9 @@ class VoiceJournal {
         this.apiKey = localStorage.getItem('openai_api_key') || '';
         this.conversations = JSON.parse(localStorage.getItem('conversations') || '[]');
         this.currentConversation = [];
+        this.supabase = null;
+        this.journalService = null;
+        this.supabaseEnabled = false;
         
         this.init();
     }
@@ -15,6 +198,7 @@ class VoiceJournal {
     init() {
         this.setupEventListeners();
         this.setupVoiceRecognition();
+        this.setupSupabase();
         this.loadJournalEntries();
         this.registerServiceWorker();
         this.updateApiStatus();
@@ -306,54 +490,102 @@ class VoiceJournal {
             .replace(/\n/g, '<br>');
     }
 
-    saveConversation(userMessage, aiResponse) {
+    async saveConversation(userMessage, aiResponse) {
         const conversation = {
             id: Date.now(),
             date: new Date().toISOString(),
             userMessage,
             aiResponse,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            messages: [
+                {
+                    role: 'user',
+                    content: userMessage,
+                    timestamp: new Date().toISOString()
+                },
+                {
+                    role: 'assistant',
+                    content: aiResponse,
+                    timestamp: new Date().toISOString()
+                }
+            ]
         };
 
+        // Save to local storage (fallback)
         this.conversations.unshift(conversation);
         
-        // Keep only last 100 conversations
+        // Keep only last 100 conversations locally
         if (this.conversations.length > 100) {
             this.conversations = this.conversations.slice(0, 100);
         }
 
         localStorage.setItem('conversations', JSON.stringify(this.conversations));
+
+        // Save to Supabase if enabled
+        if (this.supabaseEnabled && this.journalService) {
+            try {
+                await this.journalService.saveConversation(conversation);
+                console.log('Conversation saved to Supabase');
+            } catch (error) {
+                console.error('Failed to save to Supabase:', error);
+                // Continue with local storage as fallback
+            }
+        }
+
         this.loadJournalEntries();
     }
 
-    loadJournalEntries() {
+    async loadJournalEntries() {
         const entriesContainer = document.getElementById('journalEntries');
         entriesContainer.innerHTML = '';
 
-        if (this.conversations.length === 0) {
-            entriesContainer.innerHTML = '<p class="no-entries">No journal entries yet. Start a conversation!</p>';
-            return;
-        }
+        try {
+            let conversations = this.conversations;
 
-        this.conversations.forEach(conversation => {
-            const entryDiv = document.createElement('div');
-            entryDiv.className = 'journal-entry';
-            entryDiv.innerHTML = `
-                <div class="entry-header">
-                    <span class="entry-date">${new Date(conversation.date).toLocaleDateString()}</span>
-                    <span class="entry-time">${new Date(conversation.timestamp).toLocaleTimeString()}</span>
-                </div>
-                <div class="entry-preview">
-                    <strong>You:</strong> ${conversation.userMessage.substring(0, 100)}${conversation.userMessage.length > 100 ? '...' : ''}
-                </div>
-                <div class="entry-preview">
-                    <strong>AI:</strong> ${conversation.aiResponse.substring(0, 100)}${conversation.aiResponse.length > 100 ? '...' : ''}
-                </div>
-            `;
-            
-            entryDiv.addEventListener('click', () => this.viewEntry(conversation));
-            entriesContainer.appendChild(entryDiv);
-        });
+            // Load from Supabase if enabled
+            if (this.supabaseEnabled && this.journalService) {
+                const supabaseConversations = await this.journalService.getConversations();
+                if (supabaseConversations.length > 0) {
+                    // Convert Supabase format to local format for display
+                    conversations = supabaseConversations.map(conv => ({
+                        id: conv.id,
+                        date: conv.date,
+                        userMessage: conv.messages?.find(m => m.role === 'user')?.content || '',
+                        aiResponse: conv.messages?.find(m => m.role === 'assistant')?.content || '',
+                        timestamp: conv.created_at
+                    }));
+                }
+            }
+
+            if (conversations.length === 0) {
+                entriesContainer.innerHTML = '<p class="no-entries">No journal entries yet. Start a conversation!</p>';
+                return;
+            }
+
+            conversations.forEach(conversation => {
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'journal-entry';
+                entryDiv.innerHTML = `
+                    <div class="entry-header">
+                        <span class="entry-date">${new Date(conversation.date).toLocaleDateString()}</span>
+                        <span class="entry-time">${new Date(conversation.timestamp).toLocaleTimeString()}</span>
+                        ${this.supabaseEnabled ? '<span class="cloud-sync">☁️</span>' : ''}
+                    </div>
+                    <div class="entry-preview">
+                        <strong>You:</strong> ${conversation.userMessage.substring(0, 100)}${conversation.userMessage.length > 100 ? '...' : ''}
+                    </div>
+                    <div class="entry-preview">
+                        <strong>AI:</strong> ${conversation.aiResponse.substring(0, 100)}${conversation.aiResponse.length > 100 ? '...' : ''}
+                    </div>
+                `;
+                
+                entryDiv.addEventListener('click', () => this.viewEntry(conversation));
+                entriesContainer.appendChild(entryDiv);
+            });
+        } catch (error) {
+            console.error('Error loading journal entries:', error);
+            entriesContainer.innerHTML = '<p class="no-entries">Error loading entries. Using local storage.</p>';
+        }
     }
 
     viewEntry(conversation) {
@@ -374,7 +606,50 @@ class VoiceJournal {
         this.toggleSidebar();
     }
 
-    searchEntries(query) {
+    async searchEntries(query) {
+        if (!query.trim()) {
+            // Show all entries if no query
+            const entries = document.querySelectorAll('.journal-entry');
+            entries.forEach(entry => entry.style.display = 'block');
+            return;
+        }
+
+        try {
+            let conversations = this.conversations;
+
+            // Search in Supabase if enabled
+            if (this.supabaseEnabled && this.journalService) {
+                const searchResults = await this.journalService.searchConversations(query);
+                if (searchResults.length > 0) {
+                    conversations = searchResults.map(result => ({
+                        id: result.conversation_id,
+                        date: result.date,
+                        userMessage: result.content_preview,
+                        aiResponse: result.content_preview,
+                        timestamp: result.date
+                    }));
+                }
+            }
+
+            // Filter local entries if not using Supabase
+            if (!this.supabaseEnabled) {
+                const lowerQuery = query.toLowerCase();
+                conversations = this.conversations.filter(conv => 
+                    conv.userMessage.toLowerCase().includes(lowerQuery) ||
+                    conv.aiResponse.toLowerCase().includes(lowerQuery)
+                );
+            }
+
+            // Update the display
+            this.displaySearchResults(conversations);
+        } catch (error) {
+            console.error('Error searching entries:', error);
+            // Fallback to local search
+            this.searchEntriesLocal(query);
+        }
+    }
+
+    searchEntriesLocal(query) {
         const entries = document.querySelectorAll('.journal-entry');
         const lowerQuery = query.toLowerCase();
 
@@ -388,6 +663,37 @@ class VoiceJournal {
         });
     }
 
+    displaySearchResults(conversations) {
+        const entriesContainer = document.getElementById('journalEntries');
+        entriesContainer.innerHTML = '';
+
+        if (conversations.length === 0) {
+            entriesContainer.innerHTML = '<p class="no-entries">No matching entries found.</p>';
+            return;
+        }
+
+        conversations.forEach(conversation => {
+            const entryDiv = document.createElement('div');
+            entryDiv.className = 'journal-entry';
+            entryDiv.innerHTML = `
+                <div class="entry-header">
+                    <span class="entry-date">${new Date(conversation.date).toLocaleDateString()}</span>
+                    <span class="entry-time">${new Date(conversation.timestamp).toLocaleTimeString()}</span>
+                    ${this.supabaseEnabled ? '<span class="cloud-sync">☁️</span>' : ''}
+                </div>
+                <div class="entry-preview">
+                    <strong>You:</strong> ${conversation.userMessage.substring(0, 100)}${conversation.userMessage.length > 100 ? '...' : ''}
+                </div>
+                <div class="entry-preview">
+                    <strong>AI:</strong> ${conversation.aiResponse.substring(0, 100)}${conversation.aiResponse.length > 100 ? '...' : ''}
+                </div>
+            `;
+            
+            entryDiv.addEventListener('click', () => this.viewEntry(conversation));
+            entriesContainer.appendChild(entryDiv);
+        });
+    }
+
     toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
         sidebar.classList.toggle('open');
@@ -397,18 +703,24 @@ class VoiceJournal {
         document.getElementById('settingsModal').classList.add('open');
         document.getElementById('apiKey').value = this.apiKey;
         document.getElementById('autoListen').checked = this.autoListen;
+        document.getElementById('supabaseUrl').value = localStorage.getItem('supabase_url') || '';
+        document.getElementById('supabaseKey').value = localStorage.getItem('supabase_anon_key') || '';
     }
 
     closeSettings() {
         document.getElementById('settingsModal').classList.remove('open');
     }
 
-    saveSettings() {
+    async saveSettings() {
         this.apiKey = document.getElementById('apiKey').value.trim();
         this.autoListen = document.getElementById('autoListen').checked;
+        const supabaseUrl = document.getElementById('supabaseUrl').value.trim();
+        const supabaseKey = document.getElementById('supabaseKey').value.trim();
         
         localStorage.setItem('openai_api_key', this.apiKey);
         localStorage.setItem('autoListen', this.autoListen.toString());
+        localStorage.setItem('supabase_url', supabaseUrl);
+        localStorage.setItem('supabase_anon_key', supabaseKey);
         
         // Update listening state based on new setting
         if (this.autoListen && !this.isListening) {
@@ -417,11 +729,20 @@ class VoiceJournal {
             this.stopContinuousListening();
         }
         
+        // Reinitialize Supabase if configured
+        if (supabaseUrl && supabaseKey) {
+            await this.setupSupabase();
+        }
+        
         this.updateApiStatus();
         this.closeSettings();
         
         if (this.apiKey) {
-            alert('Settings saved successfully! API key configured.');
+            if (this.supabaseEnabled) {
+                alert('Settings saved successfully! API key and Supabase configured.');
+            } else {
+                alert('Settings saved successfully! API key configured.');
+            }
         } else {
             alert('Settings saved, but no API key provided.');
         }
@@ -493,6 +814,47 @@ class VoiceJournal {
 
     hideLoading() {
         document.getElementById('loadingIndicator').classList.add('hidden');
+    }
+
+    async setupSupabase() {
+        // Check if Supabase is configured
+        const supabaseUrl = localStorage.getItem('supabase_url');
+        const supabaseKey = localStorage.getItem('supabase_anon_key');
+        
+        if (supabaseUrl && supabaseKey) {
+            try {
+                // Dynamically import Supabase
+                const { createClient } = await import('https://cdn.skypack.dev/@supabase/supabase-js@2');
+                this.supabase = createClient(supabaseUrl, supabaseKey);
+                this.supabaseEnabled = true;
+                
+                // Initialize journal service
+                this.journalService = new JournalService(this.supabase);
+                
+                // Sync local data with Supabase
+                await this.journalService.syncLocalData();
+                
+                console.log('Supabase connected successfully');
+                this.updateSupabaseStatus(true);
+            } catch (error) {
+                console.error('Supabase connection failed:', error);
+                this.updateSupabaseStatus(false);
+            }
+        } else {
+            console.log('Supabase not configured');
+            this.updateSupabaseStatus(false);
+        }
+    }
+
+    updateSupabaseStatus(connected) {
+        const statusElement = document.getElementById('apiStatus');
+        if (connected) {
+            statusElement.textContent = '🟢 API + Cloud Sync';
+            statusElement.className = 'api-status configured';
+        } else {
+            statusElement.textContent = '🔴 API Not Configured';
+            statusElement.className = 'api-status';
+        }
     }
 
     async registerServiceWorker() {

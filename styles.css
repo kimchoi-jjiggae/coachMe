@@ -364,6 +364,12 @@ body {
     margin-bottom: 0;
 }
 
+.cloud-sync {
+    color: var(--success-color);
+    font-size: 0.75rem;
+    margin-left: 0.5rem;
+}
+
 .entry-detail {
     padding: 1rem;
 }
