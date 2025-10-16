@@ -186,13 +186,11 @@ class VoiceJournal {
         this.mediaRecorder = null;
         this.audioChunks = [];
         
-        // Load configuration from env-config.js, localStorage, or other sources (in order of priority)
-        // OpenAI functionality commented out to avoid API key issues
-        // this.apiKey = window.ENV_CONFIG?.OPENAI_API_KEY || localStorage.getItem('openai_api_key') || window.PRODUCTION_CONFIG?.OPENAI_API_KEY || window.MY_KEYS?.OPENAI_API_KEY || window.CONFIG?.OPENAI_API_KEY || '';
+        // Load configuration - hardcoded for GitHub Pages deployment
         this.apiKey = ''; // OpenAI disabled
-        this.supabaseUrl = window.ENV_CONFIG?.SUPABASE_URL || localStorage.getItem('supabaseUrl') || window.PRODUCTION_CONFIG?.SUPABASE_URL || window.MY_KEYS?.SUPABASE_URL || window.CONFIG?.SUPABASE_URL || '';
-        this.supabaseKey = window.ENV_CONFIG?.SUPABASE_ANON_KEY || localStorage.getItem('supabaseKey') || window.PRODUCTION_CONFIG?.SUPABASE_ANON_KEY || window.MY_KEYS?.SUPABASE_ANON_KEY || window.CONFIG?.SUPABASE_ANON_KEY || '';
-        this.autoListen = window.ENV_CONFIG?.AUTO_START_VOICE || localStorage.getItem('autoListen') === 'true' || window.PRODUCTION_CONFIG?.AUTO_START_VOICE || window.MY_KEYS?.AUTO_START_VOICE || window.CONFIG?.AUTO_START_VOICE || false;
+        this.supabaseUrl = 'https://mzalblqbedfwzltmsiqd.supabase.co';
+        this.supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16YWxibHFiZWRmd3psdG1zaXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0NTg5MzYsImV4cCI6MjA3NjAzNDkzNn0.X9_SmptOJCNzXGGiwXUSSd8Ql6EKUhQYOY6nVVdv6UQ';
+        this.autoListen = false;
         
         this.conversations = JSON.parse(localStorage.getItem('conversations') || '[]');
         this.currentConversation = [];

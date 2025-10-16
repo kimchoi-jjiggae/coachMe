@@ -34,11 +34,6 @@ class JournalApp {
 
     loadConfiguration() {
         // OpenAI functionality commented out to avoid API key issues
-        // this.apiKey = window.ENV_CONFIG?.OPENAI_API_KEY || 
-        //              localStorage.getItem('openai_api_key') || 
-        //              window.PRODUCTION_CONFIG?.OPENAI_API_KEY || 
-        //              window.MY_KEYS?.OPENAI_API_KEY || 
-        //              window.CONFIG?.OPENAI_API_KEY || '';
         this.apiKey = ''; // OpenAI disabled
 
         // Load auto-listen preference
@@ -161,18 +156,9 @@ class JournalApp {
         console.log('MY_KEYS available:', !!window.MY_KEYS);
         console.log('CONFIG available:', !!window.CONFIG);
         
-        // Prioritize env-config.js, then localStorage for PWA compatibility
-        supabaseUrl = window.ENV_CONFIG?.SUPABASE_URL || 
-                     localStorage.getItem('supabaseUrl') || 
-                     window.PRODUCTION_CONFIG?.SUPABASE_URL || 
-                     window.MY_KEYS?.SUPABASE_URL || 
-                     window.CONFIG?.SUPABASE_URL || '';
-        
-        supabaseKey = window.ENV_CONFIG?.SUPABASE_ANON_KEY || 
-                     localStorage.getItem('supabaseKey') || 
-                     window.PRODUCTION_CONFIG?.SUPABASE_ANON_KEY || 
-                     window.MY_KEYS?.SUPABASE_ANON_KEY || 
-                     window.CONFIG?.SUPABASE_ANON_KEY || '';
+        // Hardcoded Supabase credentials for GitHub Pages deployment
+        supabaseUrl = 'https://mzalblqbedfwzltmsiqd.supabase.co';
+        supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16YWxibHFiZWRmd3psdG1zaXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0NTg5MzYsImV4cCI6MjA3NjAzNDkzNn0.X9_SmptOJCNzXGGiwXUSSd8Ql6EKUhQYOY6nVVdv6UQ';
         
         console.log('Using configuration from:', 
                    localStorage.getItem('supabaseUrl') ? 'localStorage' : 
