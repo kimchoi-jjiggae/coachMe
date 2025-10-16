@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple PWA Test</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: #f5f5f5; 
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 10px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
+        .test { 
+            margin: 15px 0; 
+            padding: 15px; 
+            border-radius: 5px; 
+            border-left: 4px solid #ccc;
+        }
+        .success { background: #d1fae5; border-left-color: #10b981; }
+        .error { background: #fee2e2; border-left-color: #ef4444; }
+        .info { background: #d1ecf1; border-left-color: #0c5460; }
+        button { 
+            padding: 12px 20px; 
+            margin: 5px; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover { background: #0056b3; }
+        h1 { color: #333; }
+        .log { 
+            background: #f8f9fa; 
+            padding: 10px; 
+            border-radius: 3px; 
+            font-family: monospace; 
+            font-size: 12px; 
+            max-height: 200px; 
+            overflow-y: auto; 
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Simple PWA Test</h1>
+        
+        <div class="test info">
+            <h3>Current Status</h3>
+            <div id="status">Loading...</div>
+        </div>
+        
+        <div class="test">
+            <h3>Quick Tests</h3>
+            <button onclick="testBasic()">Test Basic Loading</button>
+            <button onclick="testNavigation()">Test Navigation</button>
+            <button onclick="testServiceWorker()">Test Service Worker</button>
+            <div id="testResults"></div>
+        </div>
+        
+        <div class="test">
+            <h3>Console Log</h3>
+            <button onclick="clearLog()">Clear Log</button>
+            <div id="consoleLog" class="log"></div>
+        </div>
+        
+        <div class="test info">
+            <h3>Links</h3>
+            <button onclick="window.location.href='index.html'">Main App</button>
+            <button onclick="window.location.href='journal.html'">Journal</button>
+        </div>
+    </div>
+
+    <script>
+        let logMessages = [];
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            logMessages.push(logEntry);
+            console.log(logEntry);
+            
+            const logDiv = document.getElementById('consoleLog');
+            logDiv.textContent = logMessages.join('\n');
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function clearLog() {
+            logMessages = [];
+            document.getElementById('consoleLog').textContent = '';
+        }
+        
+        function addResult(message, type = 'info') {
+            const container = document.getElementById('testResults');
+            const div = document.createElement('div');
+            div.className = `test ${type}`;
+            div.innerHTML = `<h3>${message}</h3>`;
+            container.appendChild(div);
+        }
+        
+        function testBasic() {
+            log('Testing basic loading...');
+            addResult('✅ Basic page loaded successfully', 'success');
+        }
+        
+        function testNavigation() {
+            log('Testing navigation...');
+            
+            fetch('./index.html')
+                .then(response => {
+                    if (response.ok) {
+                        addResult('✅ Navigation to index.html works', 'success');
+                        log('Navigation test: Success');
+                    } else {
+                        addResult(`❌ Navigation failed: ${response.status}`, 'error');
+                        log(`Navigation test: Failed with status ${response.status}`);
+                    }
+                })
+                .catch(error => {
+                    addResult(`❌ Navigation error: ${error.message}`, 'error');
+                    log(`Navigation test: Error - ${error.message}`);
+                });
+        }
+        
+        function testServiceWorker() {
+            log('Testing service worker...');
+            
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistration().then(registration => {
+                    if (registration) {
+                        addResult('✅ Service Worker is registered', 'success');
+                        log('Service Worker: Registered');
+                    } else {
+                        addResult('❌ Service Worker not registered', 'error');
+                        log('Service Worker: Not registered');
+                    }
+                }).catch(error => {
+                    addResult(`❌ Service Worker error: ${error.message}`, 'error');
+                    log(`Service Worker Error: ${error.message}`);
+                });
+            } else {
+                addResult('❌ Service Worker not supported', 'error');
+                log('Service Worker: Not supported');
+            }
+        }
+        
+        function checkStatus() {
+            const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+            const url = window.location.href;
+            const userAgent = navigator.userAgent;
+            
+            let statusHtml = `
+                <strong>URL:</strong> ${url}<br>
+                <strong>PWA Mode:</strong> ${isPWA ? 'Yes' : 'No'}<br>
+                <strong>User Agent:</strong> ${userAgent}<br>
+                <strong>Timestamp:</strong> ${new Date().toLocaleString()}
+            `;
+            
+            document.getElementById('status').innerHTML = statusHtml;
+            log(`Status: PWA=${isPWA}, URL=${url}`);
+        }
+        
+        // Initialize
+        window.onload = function() {
+            log('Simple PWA Test loaded');
+            checkStatus();
+        };
+    </script>
+    
+    <script>
+        // Simple service worker registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                // Try minimal service worker first
+                navigator.serviceWorker.register('./sw-minimal.js')
+                    .then(function(registration) {
+                        console.log('Minimal ServiceWorker registration successful');
+                    })
+                    .catch(function(err) {
+                        console.error('Minimal ServiceWorker registration failed: ', err);
+                        // Fallback to regular service worker
+                        navigator.serviceWorker.register('./sw.js')
+                            .then(function(registration) {
+                                console.log('Fallback ServiceWorker registration successful');
+                            })
+                            .catch(function(fallbackErr) {
+                                console.error('Fallback ServiceWorker registration failed: ', fallbackErr);
+                            });
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
