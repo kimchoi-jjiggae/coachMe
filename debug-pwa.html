@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Debug - Voice Journal</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .test { margin: 15px 0; padding: 15px; border-radius: 5px; }
+        .success { background: #d1fae5; border-left: 4px solid #10b981; }
+        .error { background: #fee2e2; border-left: 4px solid #ef4444; }
+        .info { background: #d1ecf1; border-left: 4px solid #0c5460; }
+        .warning { background: #fef3c7; border-left: 4px solid #f59e0b; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .log { background: #f8f9fa; padding: 10px; border-radius: 3px; font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto; }
+        h1 { color: #333; }
+        h3 { color: #555; margin-top: 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 PWA Debug Tool</h1>
+        
+        <div class="test">
+            <h3>🌐 Current Environment</h3>
+            <div id="environment"></div>
+        </div>
+        
+        <div class="test">
+            <h3>📱 PWA Status</h3>
+            <div id="pwaStatus"></div>
+        </div>
+        
+        <div class="test">
+            <h3>⚙️ Service Worker</h3>
+            <div id="swStatus"></div>
+        </div>
+        
+        <div class="test">
+            <h3>🔗 File Tests</h3>
+            <button onclick="testFiles()">Test All Files</button>
+            <div id="fileTests"></div>
+        </div>
+        
+        <div class="test">
+            <h3>📊 Console Log</h3>
+            <button onclick="clearLog()">Clear Log</button>
+            <div id="consoleLog" class="log"></div>
+        </div>
+        
+        <div class="test">
+            <h3>🧪 Quick Tests</h3>
+            <button onclick="testNavigation()">Test Navigation</button>
+            <button onclick="testConfig()">Test Config</button>
+            <button onclick="testSupabase()">Test Supabase</button>
+            <div id="quickTests"></div>
+        </div>
+    </div>
+
+    <script>
+        let logMessages = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            logMessages.push(logEntry);
+            console.log(logEntry);
+            
+            const logDiv = document.getElementById('consoleLog');
+            logDiv.innerHTML = logMessages.join('<br>');
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function clearLog() {
+            logMessages = [];
+            document.getElementById('consoleLog').innerHTML = '';
+        }
+        
+        function addResult(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = `test ${type}`;
+            div.innerHTML = `<h3>${message}</h3>`;
+            container.appendChild(div);
+        }
+        
+        // Test environment
+        function checkEnvironment() {
+            const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isAndroid = /Android/.test(navigator.userAgent);
+            const userAgent = navigator.userAgent;
+            const url = window.location.href;
+            
+            let envHtml = `
+                <div class="info">
+                    <strong>URL:</strong> ${url}<br>
+                    <strong>User Agent:</strong> ${userAgent}<br>
+                    <strong>PWA Mode:</strong> ${isPWA ? 'Yes' : 'No'}<br>
+                    <strong>Platform:</strong> ${isIOS ? 'iOS' : isAndroid ? 'Android' : 'Desktop'}<br>
+                    <strong>Service Worker Support:</strong> ${'serviceWorker' in navigator ? 'Yes' : 'No'}
+                </div>
+            `;
+            
+            document.getElementById('environment').innerHTML = envHtml;
+            log(`Environment: PWA=${isPWA}, Platform=${isIOS ? 'iOS' : isAndroid ? 'Android' : 'Desktop'}`);
+        }
+        
+        // Test PWA status
+        function checkPWAStatus() {
+            const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+            const isFullscreen = window.matchMedia('(display-mode: fullscreen)').matches;
+            const isMinimalUI = window.matchMedia('(display-mode: minimal-ui)').matches;
+            
+            let statusHtml = `
+                <div class="${isPWA ? 'success' : 'warning'}">
+                    <strong>Display Mode:</strong> ${isPWA ? 'Standalone (PWA)' : isFullscreen ? 'Fullscreen' : isMinimalUI ? 'Minimal UI' : 'Browser'}<br>
+                    <strong>Window Size:</strong> ${window.innerWidth}x${window.innerHeight}<br>
+                    <strong>Screen Size:</strong> ${screen.width}x${screen.height}
+                </div>
+            `;
+            
+            document.getElementById('pwaStatus').innerHTML = statusHtml;
+            log(`PWA Status: ${isPWA ? 'Running as PWA' : 'Running in browser'}`);
+        }
+        
+        // Test service worker
+        function checkServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistration().then(registration => {
+                    if (registration) {
+                        document.getElementById('swStatus').innerHTML = `
+                            <div class="success">
+                                <strong>Status:</strong> Registered<br>
+                                <strong>Scope:</strong> ${registration.scope}<br>
+                                <strong>State:</strong> ${registration.active ? registration.active.state : 'Unknown'}
+                            </div>
+                        `;
+                        log('Service Worker: Registered and active');
+                    } else {
+                        document.getElementById('swStatus').innerHTML = `
+                            <div class="error">
+                                <strong>Status:</strong> Not registered
+                            </div>
+                        `;
+                        log('Service Worker: Not registered');
+                    }
+                }).catch(error => {
+                    document.getElementById('swStatus').innerHTML = `
+                        <div class="error">
+                            <strong>Error:</strong> ${error.message}
+                        </div>
+                    `;
+                    log(`Service Worker Error: ${error.message}`);
+                });
+            } else {
+                document.getElementById('swStatus').innerHTML = `
+                    <div class="error">
+                        <strong>Status:</strong> Not supported
+                    </div>
+                `;
+                log('Service Worker: Not supported');
+            }
+        }
+        
+        // Test files
+        function testFiles() {
+            const files = [
+                './index.html',
+                './journal.html',
+                './app.js',
+                './journal-app.js',
+                './styles.css',
+                './manifest.json',
+                './sw.js',
+                './env-config.js',
+                './production-config.js',
+                './config.js'
+            ];
+            
+            document.getElementById('fileTests').innerHTML = '<div class="info">Testing files...</div>';
+            
+            let results = [];
+            let completed = 0;
+            
+            files.forEach(file => {
+                fetch(file)
+                    .then(response => {
+                        results.push({
+                            file: file,
+                            status: response.status,
+                            ok: response.ok
+                        });
+                        completed++;
+                        
+                        if (completed === files.length) {
+                            displayFileResults(results);
+                        }
+                    })
+                    .catch(error => {
+                        results.push({
+                            file: file,
+                            status: 'Error',
+                            ok: false,
+                            error: error.message
+                        });
+                        completed++;
+                        
+                        if (completed === files.length) {
+                            displayFileResults(results);
+                        }
+                    });
+            });
+        }
+        
+        function displayFileResults(results) {
+            let html = '';
+            results.forEach(result => {
+                const statusClass = result.ok ? 'success' : 'error';
+                const statusText = result.ok ? `✅ ${result.status}` : `❌ ${result.status}`;
+                html += `<div class="${statusClass}"><strong>${result.file}:</strong> ${statusText}</div>`;
+                log(`File test: ${result.file} - ${statusText}`);
+            });
+            document.getElementById('fileTests').innerHTML = html;
+        }
+        
+        // Quick tests
+        function testNavigation() {
+            document.getElementById('quickTests').innerHTML = '<div class="info">Testing navigation...</div>';
+            
+            fetch('./index.html')
+                .then(response => {
+                    if (response.ok) {
+                        addResult('quickTests', '✅ Navigation to index.html works', 'success');
+                        log('Navigation test: Success');
+                    } else {
+                        addResult('quickTests', `❌ Navigation failed: ${response.status}`, 'error');
+                        log(`Navigation test: Failed with status ${response.status}`);
+                    }
+                })
+                .catch(error => {
+                    addResult('quickTests', `❌ Navigation error: ${error.message}`, 'error');
+                    log(`Navigation test: Error - ${error.message}`);
+                });
+        }
+        
+        function testConfig() {
+            document.getElementById('quickTests').innerHTML = '<div class="info">Testing configuration...</div>';
+            
+            try {
+                // Test if config files are loaded
+                const hasEnvConfig = typeof window.ENV_CONFIG !== 'undefined';
+                const hasProductionConfig = typeof window.PRODUCTION_CONFIG !== 'undefined';
+                const hasMyKeys = typeof window.MY_KEYS !== 'undefined';
+                
+                let configHtml = `
+                    <div class="info">
+                        <strong>ENV_CONFIG:</strong> ${hasEnvConfig ? '✅ Loaded' : '❌ Missing'}<br>
+                        <strong>PRODUCTION_CONFIG:</strong> ${hasProductionConfig ? '✅ Loaded' : '❌ Missing'}<br>
+                        <strong>MY_KEYS:</strong> ${hasMyKeys ? '✅ Loaded' : '❌ Missing'}
+                    </div>
+                `;
+                
+                addResult('quickTests', configHtml, 'info');
+                log(`Config test: ENV=${hasEnvConfig}, PROD=${hasProductionConfig}, KEYS=${hasMyKeys}`);
+            } catch (error) {
+                addResult('quickTests', `❌ Config error: ${error.message}`, 'error');
+                log(`Config test: Error - ${error.message}`);
+            }
+        }
+        
+        function testSupabase() {
+            document.getElementById('quickTests').innerHTML = '<div class="info">Testing Supabase...</div>';
+            
+            try {
+                // Test Supabase configuration
+                const supabaseUrl = 'https://mzalbqlqedfwzltmsiqd.supabase.co';
+                const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16YWxibHFiZWRmd3psdG1zaXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0NTg5MzYsImV4cCI6MjA3NjAzNDkzNn0.X9_SmptOJCNzXGGiwXUSSd8Ql6EKUhQYOY6nVVdv6UQ';
+                
+                fetch(`${supabaseUrl}/rest/v1/`, {
+                    headers: {
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        addResult('quickTests', '✅ Supabase connection works', 'success');
+                        log('Supabase test: Success');
+                    } else {
+                        addResult('quickTests', `❌ Supabase failed: ${response.status}`, 'error');
+                        log(`Supabase test: Failed with status ${response.status}`);
+                    }
+                })
+                .catch(error => {
+                    addResult('quickTests', `❌ Supabase error: ${error.message}`, 'error');
+                    log(`Supabase test: Error - ${error.message}`);
+                });
+            } catch (error) {
+                addResult('quickTests', `❌ Supabase test error: ${error.message}`, 'error');
+                log(`Supabase test: Error - ${error.message}`);
+            }
+        }
+        
+        // Initialize when page loads
+        window.onload = function() {
+            log('PWA Debug Tool loaded');
+            checkEnvironment();
+            checkPWAStatus();
+            checkServiceWorker();
+        };
+    </script>
+    
+    <script>
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(function(err) {
+                        console.error('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Journal - Page Not Found</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container { 
+            text-align: center; 
+            max-width: 500px; 
+            background: rgba(255,255,255,0.1);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        h1 { font-size: 3em; margin: 0; }
+        p { font-size: 1.2em; margin: 20px 0; }
+        button { 
+            background: rgba(255,255,255,0.2); 
+            color: white; 
+            border: 2px solid white; 
+            padding: 15px 30px; 
+            border-radius: 25px; 
+            font-size: 1.1em; 
+            cursor: pointer; 
+            margin: 10px;
+            transition: all 0.3s;
+        }
+        button:hover { 
+            background: white; 
+            color: #667eea; 
+        }
+        .links { margin-top: 30px; }
+        .links a { 
+            color: white; 
+            text-decoration: none; 
+            margin: 0 15px; 
+            font-size: 1.1em;
+        }
+        .links a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 404</h1>
+        <p>Oops! The page you're looking for doesn't exist.</p>
+        <p>But don't worry, your Voice Journal is still here!</p>
+        
+        <button onclick="goHome()">🏠 Go Home</button>
+        <button onclick="goJournal()">📝 Journal</button>
+        
+        <div class="links">
+            <a href="index.html">Main App</a>
+            <a href="journal.html">Journal</a>
+            <a href="debug-pwa.html">Debug</a>
+        </div>
+    </div>
+
+    <script>
+        function goHome() {
+            window.location.href = './index.html';
+        }
+        
+        function goJournal() {
+            window.location.href = './journal.html';
+        }
+        
+        // Auto-redirect to home after 5 seconds
+        setTimeout(() => {
+            window.location.href = './index.html';
+        }, 5000);
+    </script>
+</body>
+</html>
