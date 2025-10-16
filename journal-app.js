@@ -157,17 +157,15 @@ class JournalApp {
         console.log('CONFIG available:', !!window.CONFIG);
         
         // Hardcoded Supabase credentials for GitHub Pages deployment
+        // Override any other configuration with working credentials
         supabaseUrl = 'https://mzalblqbedfwzltmsiqd.supabase.co';
         supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16YWxibHFiZWRmd3psdG1zaXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0NTg5MzYsImV4cCI6MjA3NjAzNDkzNn0.X9_SmptOJCNzXGGiwXUSSd8Ql6EKUhQYOY6nVVdv6UQ';
         
+        console.log('Using hardcoded Supabase credentials for GitHub Pages');
         console.log('Hardcoded Supabase URL:', supabaseUrl);
         console.log('Hardcoded Supabase Key:', supabaseKey ? 'Present' : 'Missing');
         
-        console.log('Using configuration from:', 
-                   localStorage.getItem('supabaseUrl') ? 'localStorage' : 
-                   window.PRODUCTION_CONFIG?.SUPABASE_URL ? 'PRODUCTION_CONFIG' :
-                   window.MY_KEYS?.SUPABASE_URL ? 'MY_KEYS' :
-                   window.CONFIG?.SUPABASE_URL ? 'CONFIG' : 'none');
+        console.log('Using configuration from: HARDCODED (GitHub Pages)');
         
         console.log('Supabase URL:', supabaseUrl ? 'Found' : 'Missing');
         console.log('Supabase Key:', supabaseKey ? 'Found' : 'Missing');
