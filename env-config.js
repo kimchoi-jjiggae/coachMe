@@ -23,4 +23,9 @@ if (typeof window !== 'undefined') {
     // Also set as the primary config for compatibility
     window.MY_KEYS = ENV_CONFIG;
     window.PRODUCTION_CONFIG = ENV_CONFIG;
+    
+    // Debug logging
+    console.log('ENV_CONFIG loaded:', ENV_CONFIG);
+    console.log('Supabase URL:', ENV_CONFIG.SUPABASE_URL);
+    console.log('Supabase Key:', ENV_CONFIG.SUPABASE_ANON_KEY ? 'Present' : 'Missing');
 }

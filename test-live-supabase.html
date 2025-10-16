@@ -49,6 +49,13 @@
         
         // Load configuration
         function loadConfig() {
+            // Debug: Log what's available
+            console.log('Window objects available:');
+            console.log('ENV_CONFIG:', window.ENV_CONFIG);
+            console.log('PRODUCTION_CONFIG:', window.PRODUCTION_CONFIG);
+            console.log('MY_KEYS:', window.MY_KEYS);
+            console.log('CONFIG:', window.CONFIG);
+            
             if (window.ENV_CONFIG?.SUPABASE_URL && window.ENV_CONFIG?.SUPABASE_ANON_KEY) {
                 config.supabaseUrl = window.ENV_CONFIG.SUPABASE_URL;
                 config.supabaseKey = window.ENV_CONFIG.SUPABASE_ANON_KEY;
@@ -195,9 +202,11 @@
             }
         };
         
-        // Auto-run config check on load
+        // Auto-run config check on load with delay to ensure scripts are loaded
         window.onload = function() {
-            checkConfig();
+            setTimeout(() => {
+                checkConfig();
+            }, 500);
         };
     </script>
 </body>
