@@ -9,7 +9,7 @@ const ENV_CONFIG = {
     // OPENAI_API_KEY: process.env.OPENAI_API_KEY || 'your_openai_api_key_here',
 
     // Supabase Configuration - Replace with your actual credentials
-    SUPABASE_URL: process.env.SUPABASE_URL || 'https://mzalblqbedfwzltmsiqd.supabase.co',
+    SUPABASE_URL: process.env.SUPABASE_URL || 'https://mzalbqlqedfwzltmsiqd.supabase.co',
     SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16YWxibHFiZWRmd3psdG1zaXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0NTg5MzYsImV4cCI6MjA3NjAzNDkzNn0.X9_SmptOJCNzXGGiwXUSSd8Ql6EKUhQYOY6nVVdv6UQ',
 
     // App Settings
