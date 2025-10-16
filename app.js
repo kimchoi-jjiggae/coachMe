@@ -243,6 +243,12 @@ class VoiceJournal {
         document.getElementById('saveSettings').addEventListener('click', () => this.saveSettings());
         document.getElementById('testApiKey').addEventListener('click', () => this.testApiKey());
         document.getElementById('debugBtn').addEventListener('click', () => this.debugState());
+        
+        // Add sample data if no conversations exist
+        this.addSampleData();
+        
+        // Load initial entries
+        this.loadJournalEntries();
     }
 
     setupVoiceRecognition() {
@@ -542,15 +548,19 @@ class VoiceJournal {
     }
 
     async loadJournalEntries() {
+        console.log('Loading journal entries...');
         const entriesContainer = document.getElementById('journalEntries');
         entriesContainer.innerHTML = '';
 
         try {
             let conversations = this.conversations;
+            console.log('Local conversations:', conversations.length);
 
             // Load from Supabase if enabled
             if (this.supabaseEnabled && this.journalService) {
+                console.log('Loading from Supabase...');
                 const supabaseConversations = await this.journalService.getConversations();
+                console.log('Supabase conversations:', supabaseConversations.length);
                 if (supabaseConversations.length > 0) {
                     // Convert Supabase format to local format for display
                     conversations = supabaseConversations.map(conv => ({
@@ -563,8 +573,10 @@ class VoiceJournal {
                 }
             }
 
+            console.log('Final conversations to display:', conversations.length);
             if (conversations.length === 0) {
                 entriesContainer.innerHTML = '<p class="no-entries">No journal entries yet. Start a conversation!</p>';
+                console.log('No entries found, showing empty message');
                 return;
             }
 
@@ -702,7 +714,18 @@ class VoiceJournal {
 
     toggleSidebar() {
         const sidebar = document.getElementById('sidebar');
+        const isOpening = !sidebar.classList.contains('open');
+        
+        console.log('Toggle sidebar - isOpening:', isOpening);
+        console.log('Current conversations:', this.conversations.length);
+        
+        if (isOpening) {
+            // Load entries when opening sidebar
+            this.loadJournalEntries();
+        }
+        
         sidebar.classList.toggle('open');
+        console.log('Sidebar classes after toggle:', sidebar.className);
     }
 
     openSettings() {
@@ -779,6 +802,31 @@ class VoiceJournal {
         console.log('Conversations Count:', this.conversations.length);
         console.log('Current Conversation Count:', this.currentConversation.length);
         console.log('==================');
+    }
+
+    addSampleData() {
+        if (this.conversations.length === 0) {
+            const sampleConversations = [
+                {
+                    id: 'sample-1',
+                    date: new Date().toISOString(),
+                    userMessage: "I had a really productive day today. I finished my project and felt accomplished.",
+                    aiResponse: "That's wonderful! It sounds like you're feeling proud of your achievements. What specifically about finishing the project made you feel most accomplished?",
+                    timestamp: new Date().toISOString()
+                },
+                {
+                    id: 'sample-2', 
+                    date: new Date(Date.now() - 86400000).toISOString(), // Yesterday
+                    userMessage: "I'm feeling a bit overwhelmed with all the tasks I have to do this week.",
+                    aiResponse: "It's completely normal to feel overwhelmed sometimes. Let's break this down together. What are the top 3 most important tasks you need to focus on?",
+                    timestamp: new Date(Date.now() - 86400000).toISOString()
+                }
+            ];
+            
+            this.conversations = sampleConversations;
+            localStorage.setItem('conversations', JSON.stringify(this.conversations));
+            console.log('Added sample conversations for demonstration');
+        }
     }
 
     async testApiKey() {

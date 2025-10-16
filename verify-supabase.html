@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Supabase Setup</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; max-width: 800px; }
+        .section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .error { background: #fee2e2; border-color: #ef4444; }
+        .warning { background: #fef3c7; border-color: #f59e0b; }
+        .success { background: #d1fae5; border-color: #10b981; }
+        .info { background: #d1ecf1; border-color: #0c5460; }
+        button { padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #1d4ed8; }
+        .code { background: #f5f5f5; padding: 10px; border-radius: 5px; font-family: monospace; margin: 10px 0; }
+        input, textarea { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Verify Supabase Setup</h1>
+    
+    <div class="section error">
+        <h3>❌ Issue Found</h3>
+        <p>The Supabase URL <code>https://mzalbqlqedfwzltmsiqd.supabase.co</code> cannot be reached.</p>
+        <p>This could mean:</p>
+        <ul>
+            <li>The Supabase project was deleted or paused</li>
+            <li>The URL is incorrect</li>
+            <li>There's a network connectivity issue</li>
+        </ul>
+    </div>
+    
+    <div class="section">
+        <h3>🔧 Solution Options</h3>
+        
+        <h4>Option 1: Check Your Supabase Dashboard</h4>
+        <p>Go to <a href="https://supabase.com/dashboard" target="_blank">https://supabase.com/dashboard</a> and check:</p>
+        <ul>
+            <li>Is your project still active?</li>
+            <li>What's the correct project URL?</li>
+            <li>Are the API keys still valid?</li>
+        </ul>
+        
+        <h4>Option 2: Create a New Supabase Project</h4>
+        <p>If the project is gone, create a new one:</p>
+        <ol>
+            <li>Go to <a href="https://supabase.com/dashboard" target="_blank">https://supabase.com/dashboard</a></li>
+            <li>Click "New Project"</li>
+            <li>Choose your organization</li>
+            <li>Enter project name: "voice-journal"</li>
+            <li>Set a database password</li>
+            <li>Choose a region close to you</li>
+            <li>Click "Create new project"</li>
+        </ol>
+        
+        <h4>Option 3: Update Configuration</h4>
+        <p>Once you have the correct URL and API key, update them here:</p>
+        <div class="code">
+            <label>Supabase URL:</label><br>
+            <input type="text" id="newUrl" placeholder="https://your-project.supabase.co" style="width: 100%;">
+            <br><br>
+            <label>Supabase Anon Key:</label><br>
+            <textarea id="newKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." rows="3" style="width: 100%;"></textarea>
+            <br><br>
+            <button onclick="updateConfig()">Update Configuration</button>
+        </div>
+        <div id="updateResult"></div>
+    </div>
+    
+    <div class="section">
+        <h3>🧪 Test New Configuration</h3>
+        <button onclick="testNewConfig()">Test New Configuration</button>
+        <div id="testResult"></div>
+    </div>
+    
+    <div class="section">
+        <h3>📋 Next Steps After Fixing</h3>
+        <p>Once you have a working Supabase project:</p>
+        <ol>
+            <li>Run the SQL schema to create the tables</li>
+            <li>Test the journal app</li>
+            <li>Verify entries sync to Supabase</li>
+        </ol>
+        
+        <div class="code">
+-- Run this SQL in your Supabase SQL Editor after creating the project:
+CREATE TABLE conversations (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    user_message TEXT NOT NULL,
+    ai_response TEXT NOT NULL,
+    date TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE POLICY "Allow all operations" ON conversations FOR ALL USING (true);
+        </div>
+    </div>
+
+    <script>
+        function updateConfig() {
+            const newUrl = document.getElementById('newUrl').value.trim();
+            const newKey = document.getElementById('newKey').value.trim();
+            const result = document.getElementById('updateResult');
+            
+            if (!newUrl || !newKey) {
+                result.innerHTML = '<div class="error">Please enter both URL and API key</div>';
+                return;
+            }
+            
+            // Update localStorage
+            localStorage.setItem('supabaseUrl', newUrl);
+            localStorage.setItem('supabaseKey', newKey);
+            
+            result.innerHTML = '<div class="success">✅ Configuration updated! Now test it below.</div>';
+        }
+        
+        async function testNewConfig() {
+            const result = document.getElementById('testResult');
+            result.innerHTML = '<div class="info">Testing configuration...</div>';
+            
+            const url = document.getElementById('newUrl').value.trim() || localStorage.getItem('supabaseUrl');
+            const key = document.getElementById('newKey').value.trim() || localStorage.getItem('supabaseKey');
+            
+            if (!url || !key) {
+                result.innerHTML = '<div class="error">No configuration found. Please enter URL and key above.</div>';
+                return;
+            }
+            
+            try {
+                // Test basic connectivity
+                const response = await fetch(`${url}/rest/v1/`, {
+                    headers: {
+                        'apikey': key,
+                        'Authorization': `Bearer ${key}`
+                    }
+                });
+                
+                if (response.ok) {
+                    result.innerHTML = '<div class="success">✅ Supabase connection successful! You can now use the journal app.</div>';
+                } else {
+                    result.innerHTML = `<div class="error">❌ Connection failed: ${response.status} ${response.statusText}</div>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Connection error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>

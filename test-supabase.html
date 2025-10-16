@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Supabase Test</title>
+</head>
+<body>
+    <h1>Supabase Connection Test</h1>
+    <div id="results"></div>
+    
+    <script type="module">
+        import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js@2';
+        
+        const supabaseUrl = 'https://mzalbqlqedfwzltmsiqd.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16YWxibHFiZWRmd3psdG1zaXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0NTg5MzYsImV4cCI6MjA3NjAzNDkzNn0.X9_SmptOJCNzXGGiwXUSSd8Ql6EKUhQYOY6nVVdv6UQ';
+        
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        const resultsDiv = document.getElementById('results');
+        
+        async function testSupabase() {
+            resultsDiv.innerHTML = '<p>🔍 Testing Supabase connection...</p>';
+            
+            try {
+                // Test basic connection
+                const { data, error } = await supabase.from('conversations').select('count').limit(1);
+                
+                if (error) {
+                    resultsDiv.innerHTML += `<p>❌ Error: ${error.message}</p>`;
+                    
+                    if (error.message.includes('relation "conversations" does not exist')) {
+                        resultsDiv.innerHTML += '<p>📝 The conversations table does not exist. Creating it...</p>';
+                        await createTables();
+                    }
+                } else {
+                    resultsDiv.innerHTML += '<p>✅ Supabase connection successful!</p>';
+                    resultsDiv.innerHTML += `<p>📊 Found ${data.length} conversations</p>`;
+                }
+                
+                // Test inserting a conversation
+                resultsDiv.innerHTML += '<p>🧪 Testing conversation insertion...</p>';
+                const testConversation = {
+                    id: 'test-' + Date.now(),
+                    user_message: 'Test message from browser',
+                    ai_response: 'This is a test response',
+                    date: new Date().toISOString()
+                };
+                
+                const { data: insertData, error: insertError } = await supabase
+                    .from('conversations')
+                    .insert([testConversation]);
+                    
+                if (insertError) {
+                    resultsDiv.innerHTML += `<p>❌ Insert error: ${insertError.message}</p>`;
+                } else {
+                    resultsDiv.innerHTML += '<p>✅ Test conversation inserted successfully!</p>';
+                    
+                    // Clean up
+                    await supabase.from('conversations').delete().eq('id', testConversation.id);
+                    resultsDiv.innerHTML += '<p>🧹 Test data cleaned up</p>';
+                }
+                
+            } catch (error) {
+                resultsDiv.innerHTML += `<p>❌ Test failed: ${error.message}</p>`;
+            }
+        }
+        
+        async function createTables() {
+            resultsDiv.innerHTML += '<p>🔨 Creating tables via SQL...</p>';
+            
+            // Create conversations table
+            const { data, error } = await supabase.rpc('exec_sql', {
+                sql: `
+                    CREATE TABLE IF NOT EXISTS conversations (
+                        id TEXT PRIMARY KEY,
+                        user_message TEXT NOT NULL,
+                        ai_response TEXT NOT NULL,
+                        date TIMESTAMP WITH TIME ZONE NOT NULL,
+                        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+                    );
+                `
+            });
+            
+            if (error) {
+                resultsDiv.innerHTML += `<p>❌ Table creation error: ${error.message}</p>`;
+                resultsDiv.innerHTML += '<p>📋 Please create the table manually in Supabase SQL Editor:</p>';
+                resultsDiv.innerHTML += '<pre>CREATE TABLE conversations (\n  id TEXT PRIMARY KEY,\n  user_message TEXT NOT NULL,\n  ai_response TEXT NOT NULL,\n  date TIMESTAMP WITH TIME ZONE NOT NULL,\n  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()\n);</pre>';
+            } else {
+                resultsDiv.innerHTML += '<p>✅ Tables created successfully!</p>';
+            }
+        }
+        
+        // Run the test
+        testSupabase();
+    </script>
+</body>
+</html>
+

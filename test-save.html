@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Save Function</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        button { padding: 10px; margin: 5px; }
+        input, textarea { width: 100%; padding: 10px; margin: 5px 0; }
+        #results { background: #f5f5f5; padding: 10px; margin: 10px 0; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Journal Save Function</h1>
+    
+    <div class="test-section">
+        <h3>Test Entry</h3>
+        <input type="text" id="testTitle" placeholder="Entry title" value="Test Entry">
+        <textarea id="testContent" placeholder="Entry content" rows="5">This is a test journal entry to verify the save functionality works correctly.</textarea>
+        <button onclick="testSave()">Test Save</button>
+        <div id="results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Check Results</h3>
+        <button onclick="checkResults()">Check Saved Entries</button>
+        <div id="checkResults"></div>
+    </div>
+
+    <script>
+        function testSave() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p>Testing save functionality...</p>';
+            
+            try {
+                const title = document.getElementById('testTitle').value.trim();
+                const content = document.getElementById('testContent').value.trim();
+                
+                if (!content) {
+                    results.innerHTML = '<p class="error">❌ Error: No content provided</p>';
+                    return;
+                }
+                
+                const entry = {
+                    id: 'test_' + Date.now(),
+                    title: title || 'Untitled Entry',
+                    content: content,
+                    date: new Date().toISOString(),
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                
+                // Test local storage save
+                let entries = JSON.parse(localStorage.getItem('journalEntries') || '[]');
+                entries.unshift(entry);
+                localStorage.setItem('journalEntries', JSON.stringify(entries));
+                
+                results.innerHTML = `
+                    <p class="success">✅ Save successful!</p>
+                    <p><strong>Entry ID:</strong> ${entry.id}</p>
+                    <p><strong>Title:</strong> ${entry.title}</p>
+                    <p><strong>Content:</strong> ${entry.content.substring(0, 100)}...</p>
+                    <p><strong>Total entries in storage:</strong> ${entries.length}</p>
+                    <p class="success">✅ Form should be cleared and success message shown!</p>
+                `;
+                
+                // Clear the form to simulate the app behavior
+                document.getElementById('testTitle').value = '';
+                document.getElementById('testContent').value = '';
+                
+            } catch (error) {
+                results.innerHTML = `<p class="error">❌ Error: ${error.message}</p>`;
+                console.error('Save error:', error);
+            }
+        }
+        
+        function checkResults() {
+            const results = document.getElementById('checkResults');
+            const entries = JSON.parse(localStorage.getItem('journalEntries') || '[]');
+            
+            if (entries.length === 0) {
+                results.innerHTML = '<p>No entries found in storage.</p>';
+                return;
+            }
+            
+            let html = `<h4>Found ${entries.length} entries:</h4>`;
+            entries.forEach((entry, index) => {
+                html += `
+                    <div style="border: 1px solid #ddd; padding: 10px; margin: 10px 0;">
+                        <strong>Entry ${index + 1}:</strong> ${entry.title}<br>
+                        <strong>ID:</strong> ${entry.id}<br>
+                        <strong>Date:</strong> ${new Date(entry.date).toLocaleString()}<br>
+                        <strong>Content:</strong> ${entry.content.substring(0, 100)}...
+                    </div>
+                `;
+            });
+            
+            results.innerHTML = html;
+        }
+        
+        // Load existing entries on page load
+        window.onload = function() {
+            checkResults();
+        };
+    </script>
+</body>
+</html>

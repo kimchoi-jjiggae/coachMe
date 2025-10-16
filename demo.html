@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Journal - Demo</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .demo-page {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+            text-align: center;
+        }
+        
+        .demo-header {
+            margin-bottom: 3rem;
+        }
+        
+        .demo-header h1 {
+            color: var(--primary);
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .demo-header p {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .modes {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+        
+        .mode-card {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .mode-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+        }
+        
+        .mode-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .mode-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+        
+        .mode-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+        
+        .mode-features {
+            text-align: left;
+            margin-bottom: 2rem;
+        }
+        
+        .mode-features h4 {
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+        
+        .mode-features ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .mode-features li {
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        
+        .mode-features li:before {
+            content: "✓";
+            color: var(--success);
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        
+        .mode-btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .mode-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        .demo-footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        
+        .demo-footer h3 {
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+        
+        .demo-links {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .demo-links a {
+            color: var(--primary);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--primary);
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .demo-links a:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .modes {
+                grid-template-columns: 1fr;
+            }
+            
+            .demo-header h1 {
+                font-size: 2rem;
+            }
+            
+            .demo-links {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-page">
+        <div class="demo-header">
+            <h1>🎙️ Voice Journal</h1>
+            <p>Choose your preferred way to journal with AI-powered voice technology</p>
+        </div>
+        
+        <div class="modes">
+            <!-- Chat Mode -->
+            <div class="mode-card">
+                <div class="mode-icon">💬</div>
+                <div class="mode-title">Chat Mode</div>
+                <div class="mode-description">
+                    Interactive conversations with AI for guided journaling and reflection
+                </div>
+                <div class="mode-features">
+                    <h4>Features:</h4>
+                    <ul>
+                        <li>Continuous voice recognition</li>
+                        <li>AI responses and questions</li>
+                        <li>Guided journaling prompts</li>
+                        <li>Real-time conversation flow</li>
+                        <li>Search past conversations</li>
+                    </ul>
+                </div>
+                <a href="index.html" class="mode-btn">Start Chatting</a>
+            </div>
+            
+            <!-- Write Mode -->
+            <div class="mode-card">
+                <div class="mode-icon">📝</div>
+                <div class="mode-title">Write Mode</div>
+                <div class="mode-description">
+                    Traditional journaling with voice-to-text for writing your thoughts
+                </div>
+                <div class="mode-features">
+                    <h4>Features:</h4>
+                    <ul>
+                        <li>Voice-to-text input</li>
+                        <li>Manual typing support</li>
+                        <li>Entry titles and content</li>
+                        <li>Edit and delete entries</li>
+                        <li>Auto-save drafts</li>
+                    </ul>
+                </div>
+                <a href="journal.html" class="mode-btn">Start Writing</a>
+            </div>
+        </div>
+        
+        <div class="demo-footer">
+            <h3>🚀 Additional Features</h3>
+            <div class="demo-links">
+                <a href="debug-app.html">🔧 Debug Tool</a>
+                <a href="test-supabase.html">🗄️ Test Database</a>
+                <a href="https://github.com/kimchoi-jjiggae/coachMe" target="_blank">📱 GitHub Repository</a>
+            </div>
+            <p style="margin-top: 2rem;">
+                <strong>PWA Ready:</strong> Install on your phone for a native app experience!<br>
+                <strong>Cloud Sync:</strong> All entries sync to Supabase for access across devices
+            </p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Journal</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        button { padding: 10px; margin: 5px; }
+        input, textarea { width: 100%; padding: 10px; margin: 5px 0; }
+        #results { background: #f5f5f5; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug Journal Save</h1>
+    
+    <div class="debug-section">
+        <h3>Test Journal Entry</h3>
+        <input type="text" id="testTitle" placeholder="Entry title" value="Test Entry">
+        <textarea id="testContent" placeholder="Entry content" rows="5">This is a test journal entry to debug the save functionality.</textarea>
+        <button onclick="testSave()">Test Save</button>
+        <div id="results"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3>Check Local Storage</h3>
+        <button onclick="checkStorage()">Check Storage</button>
+        <div id="storageResults"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3>Check Scripts</h3>
+        <button onclick="checkScripts()">Check Scripts</button>
+        <div id="scriptResults"></div>
+    </div>
+
+    <script>
+        function testSave() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<p>Testing save functionality...</p>';
+            
+            try {
+                const title = document.getElementById('testTitle').value.trim();
+                const content = document.getElementById('testContent').value.trim();
+                
+                if (!content) {
+                    results.innerHTML = '<p style="color: red;">Error: No content provided</p>';
+                    return;
+                }
+                
+                const entry = {
+                    id: 'test_' + Date.now(),
+                    title: title || 'Untitled Entry',
+                    content: content,
+                    date: new Date().toISOString(),
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                
+                // Test local storage
+                let entries = JSON.parse(localStorage.getItem('journalEntries') || '[]');
+                entries.unshift(entry);
+                localStorage.setItem('journalEntries', JSON.stringify(entries));
+                
+                results.innerHTML = `
+                    <p style="color: green;">✅ Save successful!</p>
+                    <p><strong>Entry ID:</strong> ${entry.id}</p>
+                    <p><strong>Title:</strong> ${entry.title}</p>
+                    <p><strong>Content:</strong> ${entry.content.substring(0, 100)}...</p>
+                    <p><strong>Total entries in storage:</strong> ${entries.length}</p>
+                `;
+                
+            } catch (error) {
+                results.innerHTML = `<p style="color: red;">❌ Error: ${error.message}</p>`;
+                console.error('Save error:', error);
+            }
+        }
+        
+        function checkStorage() {
+            const results = document.getElementById('storageResults');
+            const entries = JSON.parse(localStorage.getItem('journalEntries') || '[]');
+            
+            results.innerHTML = `
+                <h4>Local Storage Contents:</h4>
+                <p><strong>Total entries:</strong> ${entries.length}</p>
+                <details>
+                    <summary>View all entries</summary>
+                    <pre>${JSON.stringify(entries, null, 2)}</pre>
+                </details>
+            `;
+        }
+        
+        function checkScripts() {
+            const results = document.getElementById('scriptResults');
+            
+            const checks = {
+                'MY_KEYS loaded': typeof window.MY_KEYS !== 'undefined',
+                'CONFIG loaded': typeof window.CONFIG !== 'undefined',
+                'Supabase loaded': typeof window.supabase !== 'undefined',
+                'Journal App loaded': typeof window.journalApp !== 'undefined'
+            };
+            
+            let html = '<h4>Script Status:</h4>';
+            for (const [check, status] of Object.entries(checks)) {
+                html += `<p><strong>${check}:</strong> <span style="color: ${status ? 'green' : 'red'}">${status ? '✅' : '❌'}</span></p>`;
+            }
+            
+            results.innerHTML = html;
+        }
+        
+        // Run initial checks
+        window.onload = function() {
+            checkScripts();
+            checkStorage();
+        };
+    </script>
+</body>
+</html>
