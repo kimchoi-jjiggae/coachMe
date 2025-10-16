@@ -25,13 +25,61 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - simple network-first strategy
+// Fetch event - PWA-optimized strategy
 self.addEventListener('fetch', (event) => {
   // Only handle requests from our domain
   if (!event.request.url.includes('kimchoi-jjiggae.github.io/coachMe/')) {
     return;
   }
   
+  // Handle navigation requests specially for PWA
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // Cache successful navigation responses
+          if (response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // For navigation requests, try to serve index.html from cache
+          return caches.match('./index.html').then((response) => {
+            if (response) {
+              return response;
+            }
+            // Fallback to a basic page
+            return new Response(`
+              <!DOCTYPE html>
+              <html>
+                <head>
+                  <title>Voice Journal</title>
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                  <meta name="theme-color" content="#6366f1">
+                </head>
+                <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5;">
+                  <h1>🎙️ Voice Journal</h1>
+                  <p>Loading your journal...</p>
+                  <script>
+                    // Redirect to the main app
+                    window.location.href = './index.html';
+                  </script>
+                </body>
+              </html>
+            `, {
+              headers: { 'Content-Type': 'text/html' }
+            });
+          });
+        })
+    );
+    return;
+  }
+  
+  // Handle other requests (CSS, JS, images, etc.)
   event.respondWith(
     fetch(event.request)
       .then((response) => {
@@ -46,30 +94,7 @@ self.addEventListener('fetch', (event) => {
       })
       .catch(() => {
         // If network fails, try to serve from cache
-        return caches.match(event.request).then((response) => {
-          if (response) {
-            return response;
-          }
-          // If no cache, return a basic offline page for navigation requests
-          if (event.request.mode === 'navigate') {
-            return new Response(`
-              <!DOCTYPE html>
-              <html>
-                <head>
-                  <title>Voice Journal - Offline</title>
-                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                </head>
-                <body>
-                  <h1>Voice Journal</h1>
-                  <p>You're offline. Please check your internet connection and try again.</p>
-                  <button onclick="window.location.reload()">Retry</button>
-                </body>
-              </html>
-            `, {
-              headers: { 'Content-Type': 'text/html' }
-            });
-          }
-        });
+        return caches.match(event.request);
       })
   );
 });

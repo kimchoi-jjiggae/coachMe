@@ -2,7 +2,7 @@
   "name": "Voice Journal - Daily Conversations",
   "short_name": "Voice Journal",
   "description": "Voice-powered journal with AI conversations for daily reflection",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#6366f1",
