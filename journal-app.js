@@ -371,12 +371,9 @@ class JournalApp {
     }
 
     async getUserId() {
-        let userId = localStorage.getItem('userId');
-        if (!userId) {
-            userId = this.generateId();
-            localStorage.setItem('userId', userId);
-        }
-        return userId;
+        // Use a consistent user ID across all devices for cross-device sync
+        // This allows entries to be shared across all devices
+        return 'voice_journal_user';
     }
 
     loadEntries() {

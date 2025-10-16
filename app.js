@@ -100,15 +100,9 @@ class JournalService {
 
     // Get or create user ID (using device fingerprint)
     async getUserId() {
-        let userId = localStorage.getItem('voice_journal_user_id')
-        
-        if (!userId) {
-            // Generate a unique user ID based on device characteristics
-            userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
-            localStorage.setItem('voice_journal_user_id', userId)
-        }
-        
-        return userId
+        // Use a consistent user ID across all devices for cross-device sync
+        // This allows entries to be shared across all devices
+        return 'voice_journal_user'
     }
 
     // Generate a title for the conversation
