@@ -470,8 +470,8 @@ class JournalApp {
                 </div>
                 <div class="entry-item-content">${this.escapeHtml(entry.content)}</div>
                 <div class="entry-item-actions">
-                    <button class="btn-edit" onclick="journalApp.editEntry('${entry.id}')">Edit</button>
-                    <button class="btn-delete" onclick="journalApp.deleteEntry('${entry.id}')">Delete</button>
+                    <button class="btn-edit" onclick="journalApp.editEntry('${entry.id}')" title="Edit entry">✏️</button>
+                    <button class="btn-delete" onclick="journalApp.deleteEntry('${entry.id}')" title="Delete entry">🗑️</button>
                 </div>
             </div>
         `).join('');
