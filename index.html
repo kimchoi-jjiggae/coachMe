@@ -9,6 +9,113 @@
     <meta name="theme-color" content="#6366f1">
     <meta name="description" content="Voice-powered journal with AI conversations">
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <style>
+        /* Mobile-specific improvements */
+        @media (max-width: 768px) {
+            .header-controls {
+                flex-direction: column;
+                gap: 0.5rem;
+                width: 100%;
+            }
+            
+            .header-controls .btn {
+                width: 100%;
+                max-width: 200px;
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .chat-container {
+                padding: 1rem;
+            }
+            
+            .voice-controls {
+                margin: 1rem 0;
+            }
+            
+            .btn-voice {
+                width: 100%;
+                max-width: 300px;
+                padding: 1rem 1.5rem;
+                font-size: 1rem;
+            }
+            
+            .message {
+                margin: 0.75rem 0;
+                padding: 1rem;
+            }
+            
+            .message-content {
+                font-size: 0.95rem;
+                line-height: 1.5;
+            }
+            
+            .sidebar {
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .journal-entries {
+                padding: 0.75rem;
+            }
+            
+            .journal-entry {
+                margin-bottom: 1rem;
+                padding: 1rem;
+            }
+            
+            .entry-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .entry-preview {
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header {
+                padding: 0.5rem 0.75rem;
+            }
+            
+            .header h1 {
+                font-size: 1.1rem;
+            }
+            
+            .header-controls .btn {
+                padding: 0.625rem 0.875rem;
+                font-size: 0.85rem;
+            }
+            
+            .btn-voice {
+                padding: 0.875rem 1.25rem;
+                font-size: 0.95rem;
+            }
+            
+            .message {
+                margin: 0.5rem 0;
+                padding: 0.75rem;
+            }
+            
+            .message-content {
+                font-size: 0.9rem;
+            }
+            
+            .journal-entry {
+                padding: 0.75rem;
+            }
+            
+            .entry-header h3 {
+                font-size: 1.1rem;
+            }
+            
+            .entry-preview {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
 </head>
 <body>
     <div id="app">
