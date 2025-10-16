@@ -390,17 +390,27 @@ class JournalApp {
     }
 
     async loadFromSupabase() {
-        if (!this.supabase || !this.supabaseEnabled) return;
+        if (!this.supabase || !this.supabaseEnabled) {
+            console.log('Supabase not available for loading entries');
+            return;
+        }
         
         try {
             const userId = await this.getUserId();
+            console.log('Loading entries from Supabase for user:', userId);
+            
             const { data, error } = await this.supabase
                 .from('conversations')
                 .select('*')
                 .eq('user_id', userId)
                 .order('created_at', { ascending: false });
             
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase load error:', error);
+                throw error;
+            }
+            
+            console.log('Loaded entries from Supabase:', data.length, 'entries');
             
             // Convert Supabase format to local format
             this.entries = data.map(conv => ({
