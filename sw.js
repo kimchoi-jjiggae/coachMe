@@ -25,7 +25,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - PWA-optimized strategy
+// Fetch event - PWA scope handling
 self.addEventListener('fetch', (event) => {
   // Only handle requests from our domain
   if (!event.request.url.includes('kimchoi-jjiggae.github.io/coachMe/')) {
@@ -47,31 +47,37 @@ self.addEventListener('fetch', (event) => {
           return response;
         })
         .catch(() => {
-          // For navigation requests, try to serve index.html from cache
+          // For navigation requests, try multiple fallback strategies
           return caches.match('./index.html').then((response) => {
             if (response) {
               return response;
             }
-            // Fallback to a basic page
-            return new Response(`
-              <!DOCTYPE html>
-              <html>
-                <head>
-                  <title>Voice Journal</title>
-                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                  <meta name="theme-color" content="#6366f1">
-                </head>
-                <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5;">
-                  <h1>🎙️ Voice Journal</h1>
-                  <p>Loading your journal...</p>
-                  <script>
-                    // Redirect to the main app
-                    window.location.href = './index.html';
-                  </script>
-                </body>
-              </html>
-            `, {
-              headers: { 'Content-Type': 'text/html' }
+            // Try to fetch index.html directly
+            return fetch('./index.html').then((response) => {
+              if (response.ok) {
+                return response;
+              }
+              // Ultimate fallback with proper redirect
+              return new Response(`
+                <!DOCTYPE html>
+                <html>
+                  <head>
+                    <title>Voice Journal</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <meta name="theme-color" content="#6366f1">
+                    <script>
+                      // Force redirect to the correct path
+                      window.location.href = 'https://kimchoi-jjiggae.github.io/coachMe/index.html';
+                    </script>
+                  </head>
+                  <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5;">
+                    <h1>🎙️ Voice Journal</h1>
+                    <p>Redirecting to your journal...</p>
+                  </body>
+                </html>
+              `, {
+                headers: { 'Content-Type': 'text/html' }
+              });
             });
           });
         })
@@ -79,9 +85,19 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // Handle other requests (CSS, JS, images, etc.)
+  // Handle other requests with path fixing
+  let requestUrl = event.request.url;
+  
+  // Fix common PWA path issues
+  if (requestUrl.includes('kimchoi-jjiggae.github.io/coachMe/')) {
+    // Ensure the request has the correct path
+    if (!requestUrl.endsWith('/') && !requestUrl.includes('.')) {
+      requestUrl = requestUrl + '/index.html';
+    }
+  }
+  
   event.respondWith(
-    fetch(event.request)
+    fetch(requestUrl)
       .then((response) => {
         // If successful, cache and return the response
         if (response.status === 200) {
