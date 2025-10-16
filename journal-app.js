@@ -160,6 +160,9 @@ class JournalApp {
         supabaseUrl = 'https://mzalblqbedfwzltmsiqd.supabase.co';
         supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16YWxibHFiZWRmd3psdG1zaXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0NTg5MzYsImV4cCI6MjA3NjAzNDkzNn0.X9_SmptOJCNzXGGiwXUSSd8Ql6EKUhQYOY6nVVdv6UQ';
         
+        console.log('Hardcoded Supabase URL:', supabaseUrl);
+        console.log('Hardcoded Supabase Key:', supabaseKey ? 'Present' : 'Missing');
+        
         console.log('Using configuration from:', 
                    localStorage.getItem('supabaseUrl') ? 'localStorage' : 
                    window.PRODUCTION_CONFIG?.SUPABASE_URL ? 'PRODUCTION_CONFIG' :
@@ -333,11 +336,15 @@ class JournalApp {
     async saveToSupabase(entry) {
         if (!this.supabase || !this.supabaseEnabled) {
             console.log('Supabase not available, skipping cloud save');
+            console.log('Supabase client:', !!this.supabase);
+            console.log('Supabase enabled:', this.supabaseEnabled);
             return;
         }
         
         try {
             console.log('Attempting to save to Supabase:', entry.id);
+            console.log('Supabase URL:', this.supabaseUrl);
+            console.log('Supabase Key:', this.supabaseKey ? 'Present' : 'Missing');
             
             // Save as a conversation in Supabase using insert instead of upsert
             const { data, error } = await this.supabase
