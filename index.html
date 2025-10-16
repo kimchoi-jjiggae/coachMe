@@ -31,8 +31,8 @@
                 <div id="chatMessages" class="chat-messages">
                     <div class="welcome-message">
                         <h2>Welcome to your Voice Journal!</h2>
-                        <p>🎤 Click the microphone to start continuous listening - just talk naturally and I'll respond! You can also type messages. I'm here to help you reflect on your day.</p>
-                        <p><strong>💡 Pro tip:</strong> Enable "Auto-start voice listening" in settings for hands-free journaling!</p>
+                        <p>🎤 AI chat functionality is currently disabled. Use the <a href="journal.html">📝 Journal page</a> for voice-to-text writing and cloud storage.</p>
+                        <p><strong>💡 Note:</strong> This app now focuses on voice-to-text journaling with Supabase cloud sync.</p>
                     </div>
                 </div>
                 
@@ -132,11 +132,12 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Wait a bit for all scripts to load
             setTimeout(function() {
-                const hasConfig = window.ENV_CONFIG?.OPENAI_API_KEY || 
-                                window.PRODUCTION_CONFIG?.OPENAI_API_KEY || 
-                                window.MY_KEYS?.OPENAI_API_KEY || 
-                                window.CONFIG?.OPENAI_API_KEY || 
-                                localStorage.getItem('openai_api_key');
+                // Check for Supabase configuration (OpenAI disabled)
+                const hasConfig = window.ENV_CONFIG?.SUPABASE_URL || 
+                                window.PRODUCTION_CONFIG?.SUPABASE_URL || 
+                                window.MY_KEYS?.SUPABASE_URL || 
+                                window.CONFIG?.SUPABASE_URL || 
+                                localStorage.getItem('supabaseUrl');
                 
                 if (!hasConfig) {
                     // Redirect to setup page if no configuration found

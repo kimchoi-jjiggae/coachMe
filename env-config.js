@@ -5,12 +5,12 @@
 // or update the values directly in this file for GitHub Pages
 
 const ENV_CONFIG = {
-    // OpenAI Configuration - Replace with your actual API key
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY || 'your_openai_api_key_here',
+    // OpenAI Configuration - Commented out to avoid API key issues
+    // OPENAI_API_KEY: process.env.OPENAI_API_KEY || 'your_openai_api_key_here',
 
     // Supabase Configuration - Replace with your actual credentials
-    SUPABASE_URL: process.env.SUPABASE_URL || 'your_supabase_url_here',
-    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || 'your_supabase_anon_key_here',
+    SUPABASE_URL: process.env.SUPABASE_URL || 'https://mzalblqbedfwzltmsiqd.supabase.co',
+    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16YWxibHFiZWRmd3psdG1zaXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0NTg5MzYsImV4cCI6MjA3NjAzNDkzNn0.X9_SmptOJCNzXGGiwXUSSd8Ql6EKUhQYOY6nVVdv6UQ',
 
     // App Settings
     AUTO_START_VOICE: process.env.AUTO_START_VOICE === 'true' || false,

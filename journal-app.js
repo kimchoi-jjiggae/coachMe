@@ -33,12 +33,13 @@ class JournalApp {
     }
 
     loadConfiguration() {
-        // Load API key from env-config.js first, then other sources
-        this.apiKey = window.ENV_CONFIG?.OPENAI_API_KEY || 
-                     localStorage.getItem('openai_api_key') || 
-                     window.PRODUCTION_CONFIG?.OPENAI_API_KEY || 
-                     window.MY_KEYS?.OPENAI_API_KEY || 
-                     window.CONFIG?.OPENAI_API_KEY || '';
+        // OpenAI functionality commented out to avoid API key issues
+        // this.apiKey = window.ENV_CONFIG?.OPENAI_API_KEY || 
+        //              localStorage.getItem('openai_api_key') || 
+        //              window.PRODUCTION_CONFIG?.OPENAI_API_KEY || 
+        //              window.MY_KEYS?.OPENAI_API_KEY || 
+        //              window.CONFIG?.OPENAI_API_KEY || '';
+        this.apiKey = ''; // OpenAI disabled
 
         // Load auto-listen preference
         this.autoListen = localStorage.getItem('autoListen') === 'true';

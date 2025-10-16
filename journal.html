@@ -373,11 +373,12 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Wait a bit for all scripts to load
             setTimeout(function() {
-                const hasConfig = window.ENV_CONFIG?.OPENAI_API_KEY || 
-                                window.PRODUCTION_CONFIG?.OPENAI_API_KEY || 
-                                window.MY_KEYS?.OPENAI_API_KEY || 
-                                window.CONFIG?.OPENAI_API_KEY || 
-                                localStorage.getItem('openai_api_key');
+                // Check for Supabase configuration (OpenAI disabled)
+                const hasConfig = window.ENV_CONFIG?.SUPABASE_URL || 
+                                window.PRODUCTION_CONFIG?.SUPABASE_URL || 
+                                window.MY_KEYS?.SUPABASE_URL || 
+                                window.CONFIG?.SUPABASE_URL || 
+                                localStorage.getItem('supabaseUrl');
                 
                 if (!hasConfig) {
                     // Redirect to setup page if no configuration found

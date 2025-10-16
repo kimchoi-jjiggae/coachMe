@@ -187,7 +187,9 @@ class VoiceJournal {
         this.audioChunks = [];
         
         // Load configuration from env-config.js, localStorage, or other sources (in order of priority)
-        this.apiKey = window.ENV_CONFIG?.OPENAI_API_KEY || localStorage.getItem('openai_api_key') || window.PRODUCTION_CONFIG?.OPENAI_API_KEY || window.MY_KEYS?.OPENAI_API_KEY || window.CONFIG?.OPENAI_API_KEY || '';
+        // OpenAI functionality commented out to avoid API key issues
+        // this.apiKey = window.ENV_CONFIG?.OPENAI_API_KEY || localStorage.getItem('openai_api_key') || window.PRODUCTION_CONFIG?.OPENAI_API_KEY || window.MY_KEYS?.OPENAI_API_KEY || window.CONFIG?.OPENAI_API_KEY || '';
+        this.apiKey = ''; // OpenAI disabled
         this.supabaseUrl = window.ENV_CONFIG?.SUPABASE_URL || localStorage.getItem('supabaseUrl') || window.PRODUCTION_CONFIG?.SUPABASE_URL || window.MY_KEYS?.SUPABASE_URL || window.CONFIG?.SUPABASE_URL || '';
         this.supabaseKey = window.ENV_CONFIG?.SUPABASE_ANON_KEY || localStorage.getItem('supabaseKey') || window.PRODUCTION_CONFIG?.SUPABASE_ANON_KEY || window.MY_KEYS?.SUPABASE_ANON_KEY || window.CONFIG?.SUPABASE_ANON_KEY || '';
         this.autoListen = window.ENV_CONFIG?.AUTO_START_VOICE || localStorage.getItem('autoListen') === 'true' || window.PRODUCTION_CONFIG?.AUTO_START_VOICE || window.MY_KEYS?.AUTO_START_VOICE || window.CONFIG?.AUTO_START_VOICE || false;
@@ -381,6 +383,11 @@ class VoiceJournal {
     }
 
     async sendMessage() {
+        // OpenAI functionality commented out to avoid API key issues
+        this.showMessage('AI chat functionality is currently disabled. Use the Journal page for voice-to-text writing.', 'info');
+        return;
+        
+        /* Commented out OpenAI functionality
         const messageInput = document.getElementById('messageInput');
         const message = messageInput.value.trim();
         
@@ -423,6 +430,10 @@ class VoiceJournal {
     }
 
     async getAIResponse(message) {
+        // OpenAI functionality commented out to avoid API key issues
+        throw new Error('AI functionality is disabled');
+        
+        /* Commented out OpenAI functionality
         console.log('API Key status:', this.apiKey ? 'Present' : 'Missing');
         console.log('API Key length:', this.apiKey ? this.apiKey.length : 0);
         
