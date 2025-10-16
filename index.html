@@ -123,6 +123,7 @@
         <p>Listening...</p>
     </div>
 
+    <script src="env-config.js"></script>
     <script src="production-config.js"></script>
     <script src="my-keys.js"></script>
     <script src="config.js"></script>
@@ -131,7 +132,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Wait a bit for all scripts to load
             setTimeout(function() {
-                const hasConfig = window.PRODUCTION_CONFIG?.OPENAI_API_KEY || 
+                const hasConfig = window.ENV_CONFIG?.OPENAI_API_KEY || 
+                                window.PRODUCTION_CONFIG?.OPENAI_API_KEY || 
                                 window.MY_KEYS?.OPENAI_API_KEY || 
                                 window.CONFIG?.OPENAI_API_KEY || 
                                 localStorage.getItem('openai_api_key');

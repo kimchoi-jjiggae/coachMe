@@ -33,8 +33,9 @@ class JournalApp {
     }
 
     loadConfiguration() {
-        // Load API key from various sources (localStorage first for PWA compatibility)
-        this.apiKey = localStorage.getItem('openai_api_key') || 
+        // Load API key from env-config.js first, then other sources
+        this.apiKey = window.ENV_CONFIG?.OPENAI_API_KEY || 
+                     localStorage.getItem('openai_api_key') || 
                      window.PRODUCTION_CONFIG?.OPENAI_API_KEY || 
                      window.MY_KEYS?.OPENAI_API_KEY || 
                      window.CONFIG?.OPENAI_API_KEY || '';
@@ -159,13 +160,15 @@ class JournalApp {
         console.log('MY_KEYS available:', !!window.MY_KEYS);
         console.log('CONFIG available:', !!window.CONFIG);
         
-        // Prioritize localStorage for PWA compatibility
-        supabaseUrl = localStorage.getItem('supabaseUrl') || 
+        // Prioritize env-config.js, then localStorage for PWA compatibility
+        supabaseUrl = window.ENV_CONFIG?.SUPABASE_URL || 
+                     localStorage.getItem('supabaseUrl') || 
                      window.PRODUCTION_CONFIG?.SUPABASE_URL || 
                      window.MY_KEYS?.SUPABASE_URL || 
                      window.CONFIG?.SUPABASE_URL || '';
         
-        supabaseKey = localStorage.getItem('supabaseKey') || 
+        supabaseKey = window.ENV_CONFIG?.SUPABASE_ANON_KEY || 
+                     localStorage.getItem('supabaseKey') || 
                      window.PRODUCTION_CONFIG?.SUPABASE_ANON_KEY || 
                      window.MY_KEYS?.SUPABASE_ANON_KEY || 
                      window.CONFIG?.SUPABASE_ANON_KEY || '';
