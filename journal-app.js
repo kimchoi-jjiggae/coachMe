@@ -165,7 +165,7 @@ class JournalApp {
         console.log('Hardcoded Supabase URL:', supabaseUrl);
         console.log('Hardcoded Supabase Key:', supabaseKey ? 'Present' : 'Missing');
         
-        console.log('Using configuration from: HARDCODED (GitHub Pages)');
+        console.log('Using configuration from: HARDCODED (GitHub Pages) - CACHE BUST v2');
         
         console.log('Supabase URL:', supabaseUrl ? 'Found' : 'Missing');
         console.log('Supabase Key:', supabaseKey ? 'Found' : 'Missing');
