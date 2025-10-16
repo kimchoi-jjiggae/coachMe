@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Journal - Setup</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .setup-page {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .setup-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .setup-form {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: var(--background);
+            color: var(--text);
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .form-group small {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .btn-setup {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-setup:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        .success-message {
+            background: var(--success-color);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+        }
+        
+        .error-message {
+            background: var(--error-color);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+        }
+        
+        .links {
+            text-align: center;
+            margin-top: 2rem;
+        }
+        
+        .links a {
+            color: var(--primary);
+            text-decoration: none;
+            margin: 0 1rem;
+            font-weight: 600;
+        }
+        
+        .links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="setup-page">
+        <div class="setup-header">
+            <h1>🎙️ Voice Journal Setup</h1>
+            <p>Configure your API keys to enable full functionality</p>
+        </div>
+        
+        <div class="setup-form">
+            <form id="setupForm">
+                <div class="form-group">
+                    <label for="openaiKey">OpenAI API Key</label>
+                    <input type="password" id="openaiKey" placeholder="sk-proj-..." required>
+                    <small>Get your API key from <a href="https://platform.openai.com/api-keys" target="_blank">OpenAI Platform</a></small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="supabaseUrl">Supabase URL</label>
+                    <input type="url" id="supabaseUrl" placeholder="https://your-project.supabase.co" required>
+                    <small>Get this from your Supabase project settings</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="supabaseKey">Supabase Anon Key</label>
+                    <input type="password" id="supabaseKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." required>
+                    <small>Get this from your Supabase project API settings</small>
+                </div>
+                
+                <button type="submit" class="btn-setup">Save Configuration</button>
+            </form>
+            
+            <div id="message"></div>
+        </div>
+        
+        <div class="links">
+            <a href="index.html">💬 Chat Mode</a>
+            <a href="journal.html">📝 Write Mode</a>
+            <a href="demo.html">🚀 Demo</a>
+        </div>
+    </div>
+
+    <script>
+        // Load existing configuration
+        document.addEventListener('DOMContentLoaded', function() {
+            const openaiKey = localStorage.getItem('openai_api_key') || '';
+            const supabaseUrl = localStorage.getItem('supabaseUrl') || '';
+            const supabaseKey = localStorage.getItem('supabaseKey') || '';
+            
+            document.getElementById('openaiKey').value = openaiKey;
+            document.getElementById('supabaseUrl').value = supabaseUrl;
+            document.getElementById('supabaseKey').value = supabaseKey;
+        });
+        
+        // Handle form submission
+        document.getElementById('setupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const openaiKey = document.getElementById('openaiKey').value.trim();
+            const supabaseUrl = document.getElementById('supabaseUrl').value.trim();
+            const supabaseKey = document.getElementById('supabaseKey').value.trim();
+            
+            if (!openaiKey || !supabaseUrl || !supabaseKey) {
+                showMessage('Please fill in all fields', 'error');
+                return;
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('openai_api_key', openaiKey);
+            localStorage.setItem('supabaseUrl', supabaseUrl);
+            localStorage.setItem('supabaseKey', supabaseKey);
+            
+            showMessage('Configuration saved successfully! You can now use the Voice Journal app.', 'success');
+            
+            // Test the configuration
+            testConfiguration(openaiKey, supabaseUrl, supabaseKey);
+        });
+        
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="${type}-message">${text}</div>`;
+        }
+        
+        async function testConfiguration(openaiKey, supabaseUrl, supabaseKey) {
+            try {
+                // Test Supabase connection
+                const response = await fetch(`${supabaseUrl}/rest/v1/`, {
+                    headers: {
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`
+                    }
+                });
+                
+                if (response.ok) {
+                    showMessage('✅ Configuration saved and tested successfully! Your app is ready to use.', 'success');
+                } else {
+                    showMessage('⚠️ Configuration saved, but Supabase connection failed. Please check your Supabase credentials.', 'error');
+                }
+            } catch (error) {
+                showMessage('⚠️ Configuration saved, but connection test failed. Please check your credentials.', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

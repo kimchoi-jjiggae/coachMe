@@ -186,11 +186,12 @@ class VoiceJournal {
         this.mediaRecorder = null;
         this.audioChunks = [];
         
-        // Load configuration from my-keys.js, config.js, or localStorage (in order of priority)
-        this.apiKey = window.MY_KEYS?.OPENAI_API_KEY || window.CONFIG?.OPENAI_API_KEY || localStorage.getItem('openai_api_key') || '';
-        this.supabaseUrl = window.MY_KEYS?.SUPABASE_URL || window.CONFIG?.SUPABASE_URL || localStorage.getItem('supabase_url') || '';
-        this.supabaseKey = window.MY_KEYS?.SUPABASE_ANON_KEY || window.CONFIG?.SUPABASE_ANON_KEY || localStorage.getItem('supabase_anon_key') || '';
-        this.autoListen = window.MY_KEYS?.AUTO_START_VOICE || window.CONFIG?.AUTO_START_VOICE || localStorage.getItem('autoListen') === 'true';
+        // Load configuration from production-config.js, my-keys.js, config.js, or localStorage (in order of priority)
+        // For PWA mode, prioritize localStorage which persists across sessions
+        this.apiKey = localStorage.getItem('openai_api_key') || window.PRODUCTION_CONFIG?.OPENAI_API_KEY || window.MY_KEYS?.OPENAI_API_KEY || window.CONFIG?.OPENAI_API_KEY || '';
+        this.supabaseUrl = localStorage.getItem('supabaseUrl') || window.PRODUCTION_CONFIG?.SUPABASE_URL || window.MY_KEYS?.SUPABASE_URL || window.CONFIG?.SUPABASE_URL || '';
+        this.supabaseKey = localStorage.getItem('supabaseKey') || window.PRODUCTION_CONFIG?.SUPABASE_ANON_KEY || window.MY_KEYS?.SUPABASE_ANON_KEY || window.CONFIG?.SUPABASE_ANON_KEY || '';
+        this.autoListen = localStorage.getItem('autoListen') === 'true' || window.PRODUCTION_CONFIG?.AUTO_START_VOICE || window.MY_KEYS?.AUTO_START_VOICE || window.CONFIG?.AUTO_START_VOICE || false;
         
         this.conversations = JSON.parse(localStorage.getItem('conversations') || '[]');
         this.currentConversation = [];

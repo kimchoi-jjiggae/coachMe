@@ -33,14 +33,11 @@ class JournalApp {
     }
 
     loadConfiguration() {
-        // Load API key from various sources
-        if (window.MY_KEYS?.OPENAI_API_KEY) {
-            this.apiKey = window.MY_KEYS.OPENAI_API_KEY;
-        } else if (window.CONFIG?.OPENAI_API_KEY) {
-            this.apiKey = window.CONFIG.OPENAI_API_KEY;
-        } else {
-            this.apiKey = localStorage.getItem('openai_api_key') || '';
-        }
+        // Load API key from various sources (localStorage first for PWA compatibility)
+        this.apiKey = localStorage.getItem('openai_api_key') || 
+                     window.PRODUCTION_CONFIG?.OPENAI_API_KEY || 
+                     window.MY_KEYS?.OPENAI_API_KEY || 
+                     window.CONFIG?.OPENAI_API_KEY || '';
 
         // Load auto-listen preference
         this.autoListen = localStorage.getItem('autoListen') === 'true';
@@ -162,19 +159,22 @@ class JournalApp {
         console.log('MY_KEYS available:', !!window.MY_KEYS);
         console.log('CONFIG available:', !!window.CONFIG);
         
-        if (window.MY_KEYS?.SUPABASE_URL && window.MY_KEYS?.SUPABASE_ANON_KEY) {
-            supabaseUrl = window.MY_KEYS.SUPABASE_URL;
-            supabaseKey = window.MY_KEYS.SUPABASE_ANON_KEY;
-            console.log('Using MY_KEYS configuration');
-        } else if (window.CONFIG?.SUPABASE_URL && window.CONFIG?.SUPABASE_ANON_KEY) {
-            supabaseUrl = window.CONFIG.SUPABASE_URL;
-            supabaseKey = window.CONFIG.SUPABASE_ANON_KEY;
-            console.log('Using CONFIG configuration');
-        } else {
-            supabaseUrl = localStorage.getItem('supabaseUrl');
-            supabaseKey = localStorage.getItem('supabaseKey');
-            console.log('Using localStorage configuration');
-        }
+        // Prioritize localStorage for PWA compatibility
+        supabaseUrl = localStorage.getItem('supabaseUrl') || 
+                     window.PRODUCTION_CONFIG?.SUPABASE_URL || 
+                     window.MY_KEYS?.SUPABASE_URL || 
+                     window.CONFIG?.SUPABASE_URL || '';
+        
+        supabaseKey = localStorage.getItem('supabaseKey') || 
+                     window.PRODUCTION_CONFIG?.SUPABASE_ANON_KEY || 
+                     window.MY_KEYS?.SUPABASE_ANON_KEY || 
+                     window.CONFIG?.SUPABASE_ANON_KEY || '';
+        
+        console.log('Using configuration from:', 
+                   localStorage.getItem('supabaseUrl') ? 'localStorage' : 
+                   window.PRODUCTION_CONFIG?.SUPABASE_URL ? 'PRODUCTION_CONFIG' :
+                   window.MY_KEYS?.SUPABASE_URL ? 'MY_KEYS' :
+                   window.CONFIG?.SUPABASE_URL ? 'CONFIG' : 'none');
         
         console.log('Supabase URL:', supabaseUrl ? 'Found' : 'Missing');
         console.log('Supabase Key:', supabaseKey ? 'Found' : 'Missing');
