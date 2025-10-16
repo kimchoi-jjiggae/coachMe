@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Entry in Supabase</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background: #d1fae5; border-color: #10b981; }
+        .error { background: #fee2e2; border-color: #ef4444; }
+        .info { background: #d1ecf1; border-color: #0c5460; }
+        button { padding: 10px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Check Entry in Supabase</h1>
+    
+    <div id="results"></div>
+    
+    <button onclick="checkSpecificEntry()">Check Specific Entry</button>
+    <button onclick="checkAllEntries()">Check All Entries</button>
+    <button onclick="checkUserEntries()">Check User Entries</button>
+    
+    <script type="module">
+        import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js@2';
+        
+        const supabaseUrl = 'https://mzalblqbedfwzltmsiqd.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16YWxibHFiZWRmd3psdG1zaXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0NTg5MzYsImV4cCI6MjA3NjAzNDkzNn0.X9_SmptOJCNzXGGiwXUSSd8Ql6EKUhQYOY6nVVdv6UQ';
+        
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        
+        function showResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = message;
+            document.getElementById('results').appendChild(div);
+        }
+        
+        window.checkSpecificEntry = async function() {
+            showResult('Checking specific entry: entry_1760652855070_s4x49js0f', 'info');
+            
+            try {
+                const { data, error } = await supabase
+                    .from('conversations')
+                    .select('*')
+                    .eq('id', 'entry_1760652855070_s4x49js0f');
+                
+                if (error) {
+                    showResult(`❌ Error: ${error.message}`, 'error');
+                } else if (data.length === 0) {
+                    showResult('❌ Entry not found in Supabase', 'error');
+                } else {
+                    const entry = data[0];
+                    showResult(`✅ Entry found!<br>
+                        ID: ${entry.id}<br>
+                        User ID: ${entry.user_id}<br>
+                        Message: ${entry.user_message}<br>
+                        Date: ${new Date(entry.date).toLocaleString()}`, 'success');
+                }
+            } catch (error) {
+                showResult(`❌ Error: ${error.message}`, 'error');
+            }
+        };
+        
+        window.checkAllEntries = async function() {
+            showResult('Checking all entries in database...', 'info');
+            
+            try {
+                const { data, error } = await supabase
+                    .from('conversations')
+                    .select('id, user_id, user_message, date')
+                    .order('date', { ascending: false })
+                    .limit(20);
+                
+                if (error) {
+                    showResult(`❌ Error: ${error.message}`, 'error');
+                } else {
+                    showResult(`✅ Found ${data.length} entries:<br><br>` + 
+                        data.map(entry => `
+                            <strong>ID:</strong> ${entry.id}<br>
+                            <strong>User ID:</strong> ${entry.user_id}<br>
+                            <strong>Message:</strong> ${entry.user_message?.substring(0, 50)}...<br>
+                            <strong>Date:</strong> ${new Date(entry.date).toLocaleString()}<br>
+                            <hr>
+                        `).join(''), 'success');
+                }
+            } catch (error) {
+                showResult(`❌ Error: ${error.message}`, 'error');
+            }
+        };
+        
+        window.checkUserEntries = async function() {
+            showResult('Checking entries for user: voice_journal_user', 'info');
+            
+            try {
+                const { data, error } = await supabase
+                    .from('conversations')
+                    .select('id, user_id, user_message, date')
+                    .eq('user_id', 'voice_journal_user')
+                    .order('date', { ascending: false });
+                
+                if (error) {
+                    showResult(`❌ Error: ${error.message}`, 'error');
+                } else {
+                    showResult(`✅ Found ${data.length} entries for voice_journal_user:<br><br>` + 
+                        data.map(entry => `
+                            <strong>ID:</strong> ${entry.id}<br>
+                            <strong>Message:</strong> ${entry.user_message?.substring(0, 50)}...<br>
+                            <strong>Date:</strong> ${new Date(entry.date).toLocaleString()}<br>
+                            <hr>
+                        `).join(''), 'success');
+                }
+            } catch (error) {
+                showResult(`❌ Error: ${error.message}`, 'error');
+            }
+        };
+    </script>
+</body>
+</html>
