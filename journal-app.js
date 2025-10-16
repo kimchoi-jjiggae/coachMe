@@ -345,11 +345,14 @@ class JournalApp {
             console.log('Supabase Key:', this.supabaseKey ? 'Present' : 'Missing');
             
             // Save as a conversation in Supabase using insert instead of upsert
+            const userId = await this.getUserId();
+            console.log('Saving with user_id:', userId);
+            
             const { data, error } = await this.supabase
                 .from('conversations')
                 .insert({
                     id: entry.id,
-                    user_id: await this.getUserId(),
+                    user_id: userId,
                     user_message: entry.content,
                     ai_response: '', // Empty for journal entries
                     date: entry.date,
@@ -411,6 +414,28 @@ class JournalApp {
             }
             
             console.log('Loaded entries from Supabase:', data.length, 'entries');
+            
+            // Debug: Show what entries were found
+            if (data.length > 0) {
+                console.log('Found entries:', data.map(entry => ({
+                    id: entry.id,
+                    user_id: entry.user_id,
+                    user_message: entry.user_message?.substring(0, 50) + '...'
+                })));
+            } else {
+                console.log('No entries found. Checking all entries in database...');
+                // Check what's actually in the database
+                const { data: allData, error: allError } = await this.supabase
+                    .from('conversations')
+                    .select('id, user_id, user_message')
+                    .limit(10);
+                
+                if (allError) {
+                    console.error('Error checking all entries:', allError);
+                } else {
+                    console.log('All entries in database:', allData);
+                }
+            }
             
             // Convert Supabase format to local format
             this.entries = data.map(conv => ({
