@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Live Supabase Connection</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background: #d1fae5; border-color: #10b981; }
+        .error { background: #fee2e2; border-color: #ef4444; }
+        .info { background: #d1ecf1; border-color: #0c5460; }
+        button { padding: 10px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Live Supabase Connection</h1>
+    
+    <div class="test">
+        <h3>Step 1: Check Configuration</h3>
+        <button onclick="checkConfig()">Check Configuration</button>
+        <div id="configResult"></div>
+    </div>
+    
+    <div class="test">
+        <h3>Step 2: Test Supabase Connection</h3>
+        <button onclick="testConnection()">Test Connection</button>
+        <div id="connectionResult"></div>
+    </div>
+    
+    <div class="test">
+        <h3>Step 3: Test Save to Supabase</h3>
+        <button onclick="testSave()">Test Save Entry</button>
+        <div id="saveResult"></div>
+    </div>
+    
+    <div class="test">
+        <h3>Step 4: Check What's in Supabase</h3>
+        <button onclick="checkData()">Check Supabase Data</button>
+        <div id="dataResult"></div>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js@2';
+        
+        let supabase = null;
+        let config = {};
+        
+        // Load configuration
+        function loadConfig() {
+            if (window.ENV_CONFIG?.SUPABASE_URL && window.ENV_CONFIG?.SUPABASE_ANON_KEY) {
+                config.supabaseUrl = window.ENV_CONFIG.SUPABASE_URL;
+                config.supabaseKey = window.ENV_CONFIG.SUPABASE_ANON_KEY;
+                config.source = 'ENV_CONFIG';
+            } else if (window.PRODUCTION_CONFIG?.SUPABASE_URL && window.PRODUCTION_CONFIG?.SUPABASE_ANON_KEY) {
+                config.supabaseUrl = window.PRODUCTION_CONFIG.SUPABASE_URL;
+                config.supabaseKey = window.PRODUCTION_CONFIG.SUPABASE_ANON_KEY;
+                config.source = 'PRODUCTION_CONFIG';
+            } else if (window.MY_KEYS?.SUPABASE_URL && window.MY_KEYS?.SUPABASE_ANON_KEY) {
+                config.supabaseUrl = window.MY_KEYS.SUPABASE_URL;
+                config.supabaseKey = window.MY_KEYS.SUPABASE_ANON_KEY;
+                config.source = 'MY_KEYS';
+            } else {
+                config.supabaseUrl = localStorage.getItem('supabaseUrl');
+                config.supabaseKey = localStorage.getItem('supabaseKey');
+                config.source = 'localStorage';
+            }
+        }
+        
+        window.checkConfig = function() {
+            loadConfig();
+            const result = document.getElementById('configResult');
+            
+            let html = '<div class="info">';
+            html += `<p><strong>Source:</strong> ${config.source || 'Not found'}</p>`;
+            html += `<p><strong>URL:</strong> ${config.supabaseUrl ? '✅ Found' : '❌ Missing'}</p>`;
+            html += `<p><strong>Key:</strong> ${config.supabaseKey ? '✅ Found' : '❌ Missing'}</p>`;
+            html += '</div>';
+            
+            if (config.supabaseUrl && config.supabaseKey) {
+                html += '<div class="success">✅ Configuration loaded successfully!</div>';
+            } else {
+                html += '<div class="error">❌ Configuration incomplete!</div>';
+            }
+            
+            result.innerHTML = html;
+        };
+        
+        window.testConnection = async function() {
+            loadConfig();
+            const result = document.getElementById('connectionResult');
+            result.innerHTML = '<div class="info">Testing connection...</div>';
+            
+            if (!config.supabaseUrl || !config.supabaseKey) {
+                result.innerHTML = '<div class="error">❌ No configuration found. Run Step 1 first.</div>';
+                return;
+            }
+            
+            try {
+                supabase = createClient(config.supabaseUrl, config.supabaseKey);
+                
+                // Test basic connection
+                const { data, error } = await supabase
+                    .from('conversations')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) {
+                    result.innerHTML = `<div class="error">❌ Connection failed: ${error.message}</div>`;
+                } else {
+                    result.innerHTML = '<div class="success">✅ Supabase connection successful!</div>';
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Connection error: ${error.message}</div>`;
+            }
+        };
+        
+        window.testSave = async function() {
+            loadConfig();
+            const result = document.getElementById('saveResult');
+            result.innerHTML = '<div class="info">Testing save...</div>';
+            
+            if (!supabase) {
+                result.innerHTML = '<div class="error">❌ No connection. Run Step 2 first.</div>';
+                return;
+            }
+            
+            try {
+                const testEntry = {
+                    id: 'live_test_' + Date.now(),
+                    user_id: 'test_user_' + Date.now(),
+                    user_message: 'This is a test entry from the live GitHub Pages site.',
+                    ai_response: '',
+                    date: new Date().toISOString(),
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                
+                const { data, error } = await supabase
+                    .from('conversations')
+                    .insert([testEntry])
+                    .select();
+                
+                if (error) {
+                    result.innerHTML = `<div class="error">❌ Save failed: ${error.message}</div>`;
+                } else {
+                    result.innerHTML = `<div class="success">✅ Test entry saved! ID: ${testEntry.id}</div>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Save error: ${error.message}</div>`;
+            }
+        };
+        
+        window.checkData = async function() {
+            loadConfig();
+            const result = document.getElementById('dataResult');
+            result.innerHTML = '<div class="info">Checking Supabase data...</div>';
+            
+            if (!supabase) {
+                result.innerHTML = '<div class="error">❌ No connection. Run Step 2 first.</div>';
+                return;
+            }
+            
+            try {
+                const { data, error } = await supabase
+                    .from('conversations')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+                
+                if (error) {
+                    result.innerHTML = `<div class="error">❌ Query failed: ${error.message}</div>`;
+                } else {
+                    let html = `<div class="success">✅ Found ${data.length} entries in Supabase:</div>`;
+                    
+                    if (data.length === 0) {
+                        html += '<div class="info">No entries found in Supabase.</div>';
+                    } else {
+                        data.forEach((entry, index) => {
+                            html += `<div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 3px;">`;
+                            html += `<strong>Entry ${index + 1}:</strong><br>`;
+                            html += `ID: ${entry.id}<br>`;
+                            html += `User ID: ${entry.user_id}<br>`;
+                            html += `Message: ${entry.user_message.substring(0, 50)}...<br>`;
+                            html += `Date: ${new Date(entry.date).toLocaleString()}`;
+                            html += `</div>`;
+                        });
+                    }
+                    
+                    result.innerHTML = html;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Query error: ${error.message}</div>`;
+            }
+        };
+        
+        // Auto-run config check on load
+        window.onload = function() {
+            checkConfig();
+        };
+    </script>
+</body>
+</html>
