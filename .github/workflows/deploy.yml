@@ -1,0 +1,43 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Build static site
+      run: |
+        # Create static version for GitHub Pages
+        echo "Building static version for GitHub Pages..."
+        
+        # Copy files to docs folder for GitHub Pages
+        mkdir -p docs
+        cp -r *.html *.js *.css *.json docs/
+        cp -r assets docs/ 2>/dev/null || true
+        
+        # Use the GitHub Pages version
+        cp github-pages.html docs/index.html
+        
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      if: github.ref == 'refs/heads/main'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs

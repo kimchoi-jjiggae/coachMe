@@ -710,7 +710,7 @@ class JournalApp {
         }
     }
     
-    // Create a smart title from content (fallback method)
+    // Create a smart title from content (enhanced fallback method)
     createSmartTitle(content) {
         // Clean and process the content
         const cleanContent = content.replace(/\s+/g, ' ').trim();
@@ -719,34 +719,93 @@ class JournalApp {
         const sentences = cleanContent.split(/[.!?]+/).filter(s => s.trim().length > 0);
         const firstSentence = sentences[0] || '';
         
-        // Common journal patterns to identify
+        // Enhanced patterns with better matching
         const patterns = [
-            { regex: /today/i, prefix: 'Today: ' },
-            { regex: /yesterday/i, prefix: 'Yesterday: ' },
-            { regex: /this week/i, prefix: 'This Week: ' },
-            { regex: /feeling|feel/i, prefix: 'Feeling: ' },
-            { regex: /thinking about|thoughts/i, prefix: 'Thoughts: ' },
-            { regex: /work|job|career/i, prefix: 'Work: ' },
-            { regex: /family|kids|children/i, prefix: 'Family: ' },
-            { regex: /relationship|partner|love/i, prefix: 'Relationships: ' },
-            { regex: /goal|plan|future/i, prefix: 'Goals: ' },
-            { regex: /problem|issue|challenge/i, prefix: 'Challenges: ' },
-            { regex: /grateful|thankful|appreciate/i, prefix: 'Gratitude: ' },
-            { regex: /dream|nightmare/i, prefix: 'Dreams: ' },
-            { regex: /travel|trip|vacation/i, prefix: 'Travel: ' },
-            { regex: /health|exercise|fitness/i, prefix: 'Health: ' },
-            { regex: /learning|study|education/i, prefix: 'Learning: ' }
+            // Time-based patterns
+            { regex: /(today|this morning|this afternoon|this evening|tonight)/i, prefix: 'Today: ', weight: 10 },
+            { regex: /(yesterday|last night)/i, prefix: 'Yesterday: ', weight: 10 },
+            { regex: /(this week|this month|this year)/i, prefix: 'This Week: ', weight: 8 },
+            
+            // Emotional patterns
+            { regex: /(feeling|feel|felt|emotion|emotional)/i, prefix: 'Feeling: ', weight: 9 },
+            { regex: /(happy|joy|excited|thrilled|amazing|wonderful|great)/i, prefix: 'Joy: ', weight: 8 },
+            { regex: /(sad|depressed|down|upset|disappointed|frustrated)/i, prefix: 'Sadness: ', weight: 8 },
+            { regex: /(angry|mad|furious|annoyed|irritated)/i, prefix: 'Anger: ', weight: 8 },
+            { regex: /(anxious|worried|nervous|stressed|overwhelmed)/i, prefix: 'Anxiety: ', weight: 8 },
+            { regex: /(grateful|thankful|appreciate|blessed)/i, prefix: 'Gratitude: ', weight: 9 },
+            
+            // Life areas
+            { regex: /(work|job|career|office|meeting|project)/i, prefix: 'Work: ', weight: 7 },
+            { regex: /(family|kids|children|parent|mom|dad)/i, prefix: 'Family: ', weight: 7 },
+            { regex: /(relationship|partner|boyfriend|girlfriend|love|dating)/i, prefix: 'Love: ', weight: 7 },
+            { regex: /(friend|friends|social|party|hangout)/i, prefix: 'Friends: ', weight: 6 },
+            { regex: /(health|exercise|fitness|gym|doctor|medical)/i, prefix: 'Health: ', weight: 7 },
+            { regex: /(travel|trip|vacation|holiday|adventure)/i, prefix: 'Travel: ', weight: 7 },
+            { regex: /(learning|study|education|school|class|course)/i, prefix: 'Learning: ', weight: 6 },
+            
+            // Goals and planning
+            { regex: /(goal|plan|future|dream|aspiration|ambition)/i, prefix: 'Goals: ', weight: 8 },
+            { regex: /(challenge|problem|issue|struggle|difficult)/i, prefix: 'Challenges: ', weight: 7 },
+            { regex: /(success|achievement|accomplish|win|victory)/i, prefix: 'Success: ', weight: 8 },
+            
+            // Dreams and sleep
+            { regex: /(dream|nightmare|sleep|insomnia|tired)/i, prefix: 'Dreams: ', weight: 6 },
+            
+            // Reflection
+            { regex: /(thinking|thoughts|reflection|contemplation|meditation)/i, prefix: 'Reflection: ', weight: 7 },
+            { regex: /(realization|insight|understanding|epiphany)/i, prefix: 'Insight: ', weight: 8 }
         ];
         
-        // Find matching pattern
+        // Find the best matching pattern by weight
+        let bestMatch = null;
+        let highestWeight = 0;
+        
         for (const pattern of patterns) {
-            if (pattern.regex.test(cleanContent)) {
-                const title = this.extractTitleFromSentence(firstSentence, pattern.prefix);
-                return title;
+            if (pattern.regex.test(cleanContent) && pattern.weight > highestWeight) {
+                bestMatch = pattern;
+                highestWeight = pattern.weight;
             }
         }
         
-        // Default: create title from first sentence
+        if (bestMatch) {
+            return this.extractTitleFromSentence(firstSentence, bestMatch.prefix);
+        }
+        
+        // Enhanced default title generation
+        return this.generateContextualTitle(cleanContent, firstSentence);
+    }
+    
+    // Generate contextual title based on content analysis
+    generateContextualTitle(content, firstSentence) {
+        // Extract key words and phrases
+        const words = content.toLowerCase().split(/\s+/);
+        const keyWords = words.filter(word => 
+            word.length > 3 && 
+            !['the', 'and', 'but', 'for', 'are', 'was', 'were', 'been', 'have', 'has', 'had', 'will', 'would', 'could', 'should'].includes(word)
+        );
+        
+        // Count word frequency
+        const wordCount = {};
+        keyWords.forEach(word => {
+            wordCount[word] = (wordCount[word] || 0) + 1;
+        });
+        
+        // Get most frequent words
+        const topWords = Object.entries(wordCount)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 3)
+            .map(([word]) => word);
+        
+        // Create title from top words
+        if (topWords.length > 0) {
+            const title = topWords.map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+            
+            return title.length > 50 ? title.substring(0, 47) + '...' : title;
+        }
+        
+        // Fallback to first sentence
         return this.extractTitleFromSentence(firstSentence, 'Journal: ');
     }
     
