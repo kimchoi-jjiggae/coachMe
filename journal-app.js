@@ -36,6 +36,9 @@ class JournalApp {
         // Load existing entries
         this.loadEntries();
         
+        // Set initial random prompt
+        this.setRandomPrompt();
+        
         console.log('Journal App initialized successfully');
     }
 
@@ -46,10 +49,42 @@ class JournalApp {
         // Load auto-listen preference
         this.autoListen = localStorage.getItem('autoListen') === 'true';
         
+        // Journal prompts for random selection
+        this.journalPrompts = [
+            "What's one thing that made you smile today?",
+            "What challenge are you facing right now?",
+            "How are you feeling in this moment?",
+            "What are you grateful for today?",
+            "What did you learn today?",
+            "What's something you're proud of?",
+            "What would you like to let go of?",
+            "What's bringing you joy lately?",
+            "What's on your mind right now?",
+            "What are you looking forward to?",
+            "What's something beautiful you noticed today?",
+            "What's a small win you had today?",
+            "What's something you're curious about?",
+            "What made you laugh recently?",
+            "What's something you want to remember about today?",
+            "What's a goal you're working toward?",
+            "What's something that surprised you today?",
+            "What's a moment of peace you experienced?",
+            "What's something you're excited about?",
+            "What's a lesson you learned recently?"
+        ];
+        
         console.log('Configuration loaded:', {
             hasApiKey: !!this.apiKey,
             autoListen: this.autoListen
         });
+    }
+    
+    setRandomPrompt() {
+        const textarea = document.getElementById('entryContent');
+        if (textarea && this.journalPrompts) {
+            const randomPrompt = this.journalPrompts[Math.floor(Math.random() * this.journalPrompts.length)];
+            textarea.placeholder = randomPrompt;
+        }
     }
 
     setupVoiceRecognition() {
@@ -337,6 +372,9 @@ class JournalApp {
         document.getElementById('entryContent').value = '';
         this.currentEntryId = null;
         localStorage.removeItem('journalDraft');
+        
+        // Set a new random prompt for the next entry
+        this.setRandomPrompt();
     }
 
     async saveEntry() {
