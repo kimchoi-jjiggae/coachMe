@@ -647,8 +647,8 @@ class JournalApp {
         return Math.floor((Date.now() - this.recordingStartTime) / 1000);
     }
     
-    // Generate title from entry content
-    generateTitle() {
+    // Generate title from entry content using OpenAI
+    async generateTitle() {
         const content = document.getElementById('entryContent').value.trim();
         const titleField = document.getElementById('entryTitle');
         
@@ -662,20 +662,89 @@ class JournalApp {
         generateBtn.disabled = true;
         generateBtn.textContent = '🔄 Generating...';
         
-        // Generate a smart title based on content
-        const title = this.createSmartTitle(content);
-        
-        // Update the title field
-        titleField.value = title;
+        try {
+            // Try OpenAI first, fallback to local generation
+            const title = await this.generateTitleWithOpenAI(content);
+            
+            // Update the title field
+            titleField.value = title;
+            
+            this.showMessage('Title generated successfully!', 'success');
+        } catch (error) {
+            console.log('OpenAI title generation failed, using fallback:', error);
+            
+            // Fallback to local title generation
+            const fallbackTitle = this.createSmartTitle(content);
+            titleField.value = fallbackTitle;
+            
+            this.showMessage('Title generated (using local method)', 'info');
+        }
         
         // Re-enable button
         generateBtn.disabled = false;
         generateBtn.textContent = '📝 Generate Title';
-        
-        this.showMessage('Title generated successfully!', 'success');
     }
     
-    // Create a smart title from content
+    // Generate title using OpenAI API
+    async generateTitleWithOpenAI(content) {
+        // Check if OpenAI API key is available
+        const apiKey = window.ENV_CONFIG?.OPENAI_API_KEY || window.MY_KEYS?.OPENAI_API_KEY;
+        
+        if (!apiKey || apiKey === 'your_openai_api_key_here') {
+            throw new Error('OpenAI API key not configured');
+        }
+        
+        // Truncate content if too long (OpenAI has token limits)
+        const maxLength = 2000;
+        const truncatedContent = content.length > maxLength ? 
+            content.substring(0, maxLength) + '...' : content;
+        
+        const prompt = `Generate a concise, descriptive title (3-8 words) for this journal entry. The title should capture the main theme, emotion, or topic. Make it personal and meaningful.
+
+Journal Entry:
+"${truncatedContent}"
+
+Title:`;
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-3.5-turbo',
+                messages: [
+                    {
+                        role: 'system',
+                        content: 'You are a helpful assistant that creates meaningful, concise titles for personal journal entries. Focus on the main emotion, theme, or topic. Keep titles short (3-8 words) and personal.'
+                    },
+                    {
+                        role: 'user',
+                        content: prompt
+                    }
+                ],
+                max_tokens: 20,
+                temperature: 0.7
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`OpenAI API error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const title = data.choices[0]?.message?.content?.trim();
+        
+        if (!title) {
+            throw new Error('No title generated from OpenAI');
+        }
+        
+        // Clean up the title
+        return title.replace(/^["']|["']$/g, '').trim();
+    }
+    
+    // Create a smart title from content (fallback method)
     createSmartTitle(content) {
         // Clean and process the content
         const cleanContent = content.replace(/\s+/g, ' ').trim();
@@ -743,17 +812,55 @@ class JournalApp {
     addPunctuation(text) {
         if (!text || text.trim().length === 0) return text;
         
-        // Add period at the end if missing
         let processed = text.trim();
+        
+        // 1. Handle sentence endings - add periods for natural pauses
+        processed = processed.replace(/\b(today|yesterday|this morning|this afternoon|this evening|tonight|this week|this month|this year)\b/gi, '$1.');
+        processed = processed.replace(/\b(I think|I feel|I believe|I hope|I wish|I want|I need|I should|I could|I would)\b/gi, '$1,');
+        processed = processed.replace(/\b(however|therefore|meanwhile|furthermore|moreover|additionally|also|then|next|finally|in conclusion)\b/gi, '. $1');
+        
+        // 2. Add commas for natural speech pauses
+        processed = processed.replace(/\b(well|so|um|uh|you know|I mean|actually|basically|honestly|frankly)\b/gi, '$1,');
+        processed = processed.replace(/\b(and|but|or|so|yet|for|nor)\s+/gi, ', $1 ');
+        
+        // 3. Handle lists and series
+        processed = processed.replace(/(\w+)\s+and\s+(\w+)\s+and\s+(\w+)/g, '$1, $2, and $3');
+        processed = processed.replace(/(\w+)\s+and\s+(\w+)/g, '$1, and $2');
+        
+        // 4. Add commas before relative clauses
+        processed = processed.replace(/\b(who|which|that|where|when|why)\b/gi, ', $1');
+        
+        // 5. Handle questions
+        processed = processed.replace(/\b(what|when|where|why|how|who|which|is|are|was|were|do|does|did|can|could|will|would|should|may|might)\b.*\?/gi, (match) => {
+            if (!match.endsWith('?')) {
+                return match + '?';
+            }
+            return match;
+        });
+        
+        // 6. Handle exclamations
+        processed = processed.replace(/\b(wow|amazing|incredible|fantastic|terrible|awful|great|wonderful|awesome|horrible)\b/gi, '$1!');
+        
+        // 7. Add periods after complete thoughts
+        processed = processed.replace(/\b(I|we|they|he|she|it)\b.*\b(am|is|are|was|were|have|has|had|will|would|should|can|could|may|might)\b.*[^.!?]$/gi, (match) => {
+            if (match.length > 20) { // Only for longer sentences
+                return match + '.';
+            }
+            return match;
+        });
+        
+        // 8. Clean up multiple punctuation
+        processed = processed.replace(/\.{2,}/g, '.');
+        processed = processed.replace(/,{2,}/g, ',');
+        processed = processed.replace(/\s+/g, ' '); // Clean up extra spaces
+        
+        // 9. Ensure proper sentence ending
         if (!processed.match(/[.!?]$/)) {
             processed += '.';
         }
         
-        // Add commas before common conjunctions
-        processed = processed.replace(/\s+(and|but|or|so|yet|for|nor)\s+/gi, ', $1 ');
-        
-        // Add comma before "and" in lists (simple heuristic)
-        processed = processed.replace(/(\w+)\s+and\s+(\w+)/g, '$1, and $2');
+        // 10. Capitalize first letter
+        processed = processed.charAt(0).toUpperCase() + processed.slice(1);
         
         return processed;
     }
