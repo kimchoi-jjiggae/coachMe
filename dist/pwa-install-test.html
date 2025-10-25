@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Install Test</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: #f5f5f5; 
+            font-size: 16px;
+        }
+        .container { 
+            max-width: 100%; 
+            background: white; 
+            padding: 20px; 
+            border-radius: 10px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+        }
+        .test { 
+            margin: 15px 0; 
+            padding: 15px; 
+            border-radius: 5px; 
+            border-left: 4px solid #ccc;
+        }
+        .success { background: #d1fae5; border-left-color: #10b981; }
+        .error { background: #fee2e2; border-left-color: #ef4444; }
+        .info { background: #d1ecf1; border-left-color: #0c5460; }
+        .warning { background: #fef3c7; border-left-color: #f59e0b; }
+        button { 
+            padding: 12px 20px; 
+            margin: 5px; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 16px;
+            width: 100%;
+            max-width: 300px;
+        }
+        button:hover { background: #0056b3; }
+        .install-btn { background: #10b981; }
+        .install-btn:hover { background: #059669; }
+        h1 { color: #333; font-size: 24px; }
+        h3 { color: #555; margin-top: 0; font-size: 18px; }
+        .pwa-info { font-size: 14px; color: #666; }
+        .log { 
+            background: #f8f9fa; 
+            padding: 10px; 
+            border-radius: 3px; 
+            font-family: monospace; 
+            font-size: 12px; 
+            max-height: 200px; 
+            overflow-y: auto; 
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 PWA Install Test</h1>
+        
+        <div class="test info">
+            <h3>🌐 PWA Environment</h3>
+            <div id="pwaEnv"></div>
+        </div>
+        
+        <div class="test">
+            <h3>📋 Manifest Test</h3>
+            <button onclick="testManifest()">Test Manifest</button>
+            <div id="manifestTest"></div>
+        </div>
+        
+        <div class="test">
+            <h3>⚙️ Service Worker Test</h3>
+            <button onclick="testServiceWorker()">Test Service Worker</button>
+            <div id="swTest"></div>
+        </div>
+        
+        <div class="test">
+            <h3>📱 Install Test</h3>
+            <button id="installBtn" class="install-btn" onclick="installPWA()" style="display: none;">Install PWA</button>
+            <div id="installTest"></div>
+        </div>
+        
+        <div class="test">
+            <h3>🔗 Navigation Test</h3>
+            <button onclick="testNavigation()">Test Navigation</button>
+            <div id="navTest"></div>
+        </div>
+        
+        <div class="test">
+            <h3>📊 Console Log</h3>
+            <button onclick="clearLog()">Clear Log</button>
+            <div id="consoleLog" class="log"></div>
+        </div>
+        
+        <div class="test info">
+            <h3>🔗 Quick Links</h3>
+            <button onclick="window.location.href='index.html'">Main App</button>
+            <button onclick="window.location.href='journal.html'">Journal</button>
+            <button onclick="window.location.href='mobile-test.html'">Mobile Test</button>
+        </div>
+    </div>
+
+    <script>
+        let logMessages = [];
+        let deferredPrompt;
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            logMessages.push(logEntry);
+            console.log(logEntry);
+            
+            const logDiv = document.getElementById('consoleLog');
+            logDiv.textContent = logMessages.join('\n');
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function clearLog() {
+            logMessages = [];
+            document.getElementById('consoleLog').textContent = '';
+        }
+        
+        function addResult(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = `test ${type}`;
+            div.innerHTML = `<h3>${message}</h3>`;
+            container.appendChild(div);
+        }
+        
+        // Test PWA environment
+        function checkPWAEnv() {
+            const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+            const isFullscreen = window.matchMedia('(display-mode: fullscreen)').matches;
+            const isMinimalUI = window.matchMedia('(display-mode: minimal-ui)').matches;
+            const isBrowser = !isPWA && !isFullscreen && !isMinimalUI;
+            
+            const userAgent = navigator.userAgent;
+            const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+            const isIOS = /iPad|iPhone|iPod/.test(userAgent);
+            const isAndroid = /Android/.test(userAgent);
+            
+            let envHtml = `
+                <div class="pwa-info">
+                    <strong>Display Mode:</strong> ${isPWA ? 'Standalone (PWA)' : isFullscreen ? 'Fullscreen' : isMinimalUI ? 'Minimal UI' : 'Browser'}<br>
+                    <strong>Mobile Device:</strong> ${isMobile ? 'Yes' : 'No'}<br>
+                    <strong>iOS:</strong> ${isIOS ? 'Yes' : 'No'}<br>
+                    <strong>Android:</strong> ${isAndroid ? 'Yes' : 'No'}<br>
+                    <strong>Window Size:</strong> ${window.innerWidth}x${window.innerHeight}<br>
+                    <strong>Screen Size:</strong> ${screen.width}x${screen.height}
+                </div>
+            `;
+            
+            document.getElementById('pwaEnv').innerHTML = envHtml;
+            log(`PWA Environment: ${isPWA ? 'PWA Mode' : 'Browser Mode'}, ${isMobile ? 'Mobile' : 'Desktop'}`);
+        }
+        
+        // Test manifest
+        function testManifest() {
+            document.getElementById('manifestTest').innerHTML = '<div class="info">Testing manifest...</div>';
+            
+            fetch('./manifest.json')
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                })
+                .then(manifest => {
+                    addResult('manifestTest', '✅ Manifest loaded successfully', 'success');
+                    log(`Manifest: ${manifest.name} - ${manifest.short_name}`);
+                    
+                    // Check manifest properties
+                    const checks = [
+                        { name: 'Name', value: manifest.name, required: true },
+                        { name: 'Short Name', value: manifest.short_name, required: true },
+                        { name: 'Start URL', value: manifest.start_url, required: true },
+                        { name: 'Display', value: manifest.display, required: true },
+                        { name: 'Icons', value: manifest.icons ? manifest.icons.length : 0, required: true }
+                    ];
+                    
+                    let manifestHtml = '<div class="info"><h4>Manifest Details:</h4>';
+                    checks.forEach(check => {
+                        const status = check.required ? (check.value ? '✅' : '❌') : 'ℹ️';
+                        manifestHtml += `<strong>${check.name}:</strong> ${status} ${check.value}<br>`;
+                    });
+                    manifestHtml += '</div>';
+                    
+                    addResult('manifestTest', manifestHtml, 'info');
+                })
+                .catch(error => {
+                    addResult('manifestTest', `❌ Manifest error: ${error.message}`, 'error');
+                    log(`Manifest Error: ${error.message}`);
+                });
+        }
+        
+        // Test service worker
+        function testServiceWorker() {
+            document.getElementById('swTest').innerHTML = '<div class="info">Testing service worker...</div>';
+            
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistration().then(registration => {
+                    if (registration) {
+                        addResult('swTest', '✅ Service Worker is registered', 'success');
+                        log('Service Worker: Registered');
+                        
+                        // Check service worker state
+                        if (registration.active) {
+                            addResult('swTest', `✅ Service Worker is active (${registration.active.state})`, 'success');
+                        } else if (registration.installing) {
+                            addResult('swTest', '⏳ Service Worker is installing', 'warning');
+                        } else if (registration.waiting) {
+                            addResult('swTest', '⏳ Service Worker is waiting', 'warning');
+                        }
+                    } else {
+                        addResult('swTest', '❌ Service Worker not registered', 'error');
+                        log('Service Worker: Not registered');
+                    }
+                }).catch(error => {
+                    addResult('swTest', `❌ Service Worker error: ${error.message}`, 'error');
+                    log(`Service Worker Error: ${error.message}`);
+                });
+            } else {
+                addResult('swTest', '❌ Service Worker not supported', 'error');
+                log('Service Worker: Not supported');
+            }
+        }
+        
+        // Test PWA installation
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        addResult('installTest', '✅ PWA installation accepted', 'success');
+                        log('PWA Installation: Accepted');
+                    } else {
+                        addResult('installTest', '❌ PWA installation declined', 'error');
+                        log('PWA Installation: Declined');
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                addResult('installTest', '❌ PWA installation not available', 'error');
+                log('PWA Installation: Not available');
+            }
+        }
+        
+        // Test navigation
+        function testNavigation() {
+            document.getElementById('navTest').innerHTML = '<div class="info">Testing navigation...</div>';
+            
+            const pages = ['./index.html', './journal.html'];
+            let results = [];
+            let completed = 0;
+            
+            pages.forEach(page => {
+                fetch(page)
+                    .then(response => {
+                        results.push({
+                            page: page,
+                            status: response.status,
+                            ok: response.ok
+                        });
+                        completed++;
+                        
+                        if (completed === pages.length) {
+                            displayNavResults(results);
+                        }
+                    })
+                    .catch(error => {
+                        results.push({
+                            page: page,
+                            status: 'Error',
+                            ok: false,
+                            error: error.message
+                        });
+                        completed++;
+                        
+                        if (completed === pages.length) {
+                            displayNavResults(results);
+                        }
+                    });
+            });
+        }
+        
+        function displayNavResults(results) {
+            let html = '';
+            results.forEach(result => {
+                const statusClass = result.ok ? 'success' : 'error';
+                const statusText = result.ok ? `✅ ${result.status}` : `❌ ${result.status}`;
+                html += `<div class="${statusClass}"><strong>${result.page}:</strong> ${statusText}</div>`;
+                log(`Navigation test: ${result.page} - ${statusText}`);
+            });
+            document.getElementById('navTest').innerHTML = html;
+        }
+        
+        // Initialize when page loads
+        window.onload = function() {
+            log('PWA Install Test Tool loaded');
+            checkPWAEnv();
+            
+            // Listen for PWA install prompt
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                document.getElementById('installBtn').style.display = 'block';
+                addResult('installTest', '✅ PWA installation available', 'success');
+                log('PWA Installation: Available');
+            });
+            
+            // Listen for PWA install event
+            window.addEventListener('appinstalled', () => {
+                addResult('installTest', '✅ PWA installed successfully', 'success');
+                log('PWA Installation: Completed');
+            });
+        };
+    </script>
+    
+    <script>
+        // Register service worker with PWA compatibility
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                console.log('Attempting to register service worker...');
+                
+                navigator.serviceWorker.register('./sw.js', {
+                    scope: './'
+                })
+                .then(function(registration) {
+                    console.log('ServiceWorker registration successful');
+                })
+                .catch(function(err) {
+                    console.error('ServiceWorker registration failed: ', err);
+                    
+                    // Fallback
+                    navigator.serviceWorker.register('./sw.js')
+                        .then(function(registration) {
+                            console.log('ServiceWorker registration successful (fallback)');
+                        })
+                        .catch(function(fallbackErr) {
+                            console.error('ServiceWorker fallback registration failed: ', fallbackErr);
+                        });
+                });
+            }
+        }
+        
+        // Register service worker
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', registerServiceWorker);
+        } else {
+            registerServiceWorker();
+        }
+        
+        window.addEventListener('load', function() {
+            setTimeout(registerServiceWorker, 100);
+        });
+    </script>
+</body>
+</html>

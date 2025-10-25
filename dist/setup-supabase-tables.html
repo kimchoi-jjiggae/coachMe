@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Database Setup</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; max-width: 1000px; }
+        .step { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .step h3 { color: #2563eb; margin-top: 0; }
+        .code-block { background: #f5f5f5; padding: 15px; border-radius: 5px; font-family: monospace; white-space: pre-wrap; margin: 10px 0; }
+        .warning { background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .success { background: #d1fae5; border: 1px solid #10b981; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        button { padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #1d4ed8; }
+        .test-section { background: #f8fafc; padding: 15px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🗄️ Supabase Database Setup for Voice Journal</h1>
+    
+    <div class="warning">
+        <strong>⚠️ Important:</strong> You need to create the database tables in Supabase before entries can be saved there.
+    </div>
+
+    <div class="step">
+        <h3>Step 1: Open Supabase SQL Editor</h3>
+        <p>Go to your Supabase project dashboard and open the SQL Editor:</p>
+        <div class="code-block">https://supabase.com/dashboard/project/mzalbqlqedfwzltmsiqd/sql</div>
+    </div>
+
+    <div class="step">
+        <h3>Step 2: Run This SQL Code</h3>
+        <p>Copy and paste this entire SQL code into the SQL Editor and click "Run":</p>
+        <div class="code-block">-- Create conversations table for journal entries
+CREATE TABLE IF NOT EXISTS conversations (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    user_message TEXT NOT NULL,
+    ai_response TEXT NOT NULL,
+    date TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create messages table (for future chat functionality)
+CREATE TABLE IF NOT EXISTS messages (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    conversation_id TEXT REFERENCES conversations(id) ON DELETE CASCADE,
+    role TEXT CHECK (role IN ('user', 'assistant')) NOT NULL,
+    content TEXT NOT NULL,
+    timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_conversations_user_id ON conversations(user_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_created_at ON conversations(created_at);
+CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_messages_content ON messages USING GIN (to_tsvector('english', content));
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+
+-- Create RLS policies (allow all operations for now - you can restrict later)
+CREATE POLICY "Allow all operations on conversations" ON conversations
+    FOR ALL USING (true);
+
+CREATE POLICY "Allow all operations on messages" ON messages
+    FOR ALL USING (true);</div>
+    </div>
+
+    <div class="step">
+        <h3>Step 3: Verify Tables Were Created</h3>
+        <p>After running the SQL, you should see:</p>
+        <ul>
+            <li>✅ "conversations" table created</li>
+            <li>✅ "messages" table created</li>
+            <li>✅ Indexes created</li>
+            <li>✅ RLS policies created</li>
+        </ul>
+    </div>
+
+    <div class="step">
+        <h3>Step 4: Test the Connection</h3>
+        <p>Click the button below to test if your Supabase connection is working:</p>
+        <div class="test-section">
+            <button onclick="testSupabaseConnection()">Test Supabase Connection</button>
+            <div id="testResults"></div>
+        </div>
+    </div>
+
+    <div class="step">
+        <h3>Step 5: Test Journal Entry Save</h3>
+        <p>After the tables are created, test saving a journal entry:</p>
+        <div class="test-section">
+            <button onclick="testJournalSave()">Test Journal Entry Save</button>
+            <div id="journalTestResults"></div>
+        </div>
+    </div>
+
+    <div class="success">
+        <strong>✅ Once completed:</strong> Your journal entries will automatically sync to Supabase and be accessible across all your devices!
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js@2';
+        
+        // Load Supabase configuration
+        let supabaseUrl, supabaseKey;
+        
+        if (window.MY_KEYS?.SUPABASE_URL && window.MY_KEYS?.SUPABASE_ANON_KEY) {
+            supabaseUrl = window.MY_KEYS.SUPABASE_URL;
+            supabaseKey = window.MY_KEYS.SUPABASE_ANON_KEY;
+        } else if (window.CONFIG?.SUPABASE_URL && window.CONFIG?.SUPABASE_ANON_KEY) {
+            supabaseUrl = window.CONFIG.SUPABASE_URL;
+            supabaseKey = window.CONFIG.SUPABASE_ANON_KEY;
+        } else {
+            supabaseUrl = localStorage.getItem('supabaseUrl');
+            supabaseKey = localStorage.getItem('supabaseKey');
+        }
+        
+        let supabase = null;
+        if (supabaseUrl && supabaseKey) {
+            supabase = createClient(supabaseUrl, supabaseKey);
+        }
+        
+        window.testSupabaseConnection = async function() {
+            const results = document.getElementById('testResults');
+            results.innerHTML = '<p>Testing Supabase connection...</p>';
+            
+            if (!supabase) {
+                results.innerHTML = '<p style="color: red;">❌ Supabase not configured. Please check your API keys.</p>';
+                return;
+            }
+            
+            try {
+                // Test basic connection
+                const { data, error } = await supabase
+                    .from('conversations')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) {
+                    if (error.message.includes('relation "conversations" does not exist')) {
+                        results.innerHTML = '<p style="color: orange;">⚠️ Tables not created yet. Please run the SQL code in Step 2 first.</p>';
+                    } else {
+                        results.innerHTML = `<p style="color: red;">❌ Connection error: ${error.message}</p>`;
+                    }
+                } else {
+                    results.innerHTML = '<p style="color: green;">✅ Supabase connection successful! Tables exist.</p>';
+                }
+            } catch (error) {
+                results.innerHTML = `<p style="color: red;">❌ Connection failed: ${error.message}</p>`;
+            }
+        };
+        
+        window.testJournalSave = async function() {
+            const results = document.getElementById('journalTestResults');
+            results.innerHTML = '<p>Testing journal entry save...</p>';
+            
+            if (!supabase) {
+                results.innerHTML = '<p style="color: red;">❌ Supabase not configured.</p>';
+                return;
+            }
+            
+            try {
+                const testEntry = {
+                    id: 'test_' + Date.now(),
+                    user_id: 'test_user',
+                    user_message: 'This is a test journal entry to verify Supabase integration.',
+                    ai_response: '',
+                    date: new Date().toISOString(),
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                
+                const { data, error } = await supabase
+                    .from('conversations')
+                    .insert([testEntry]);
+                
+                if (error) {
+                    results.innerHTML = `<p style="color: red;">❌ Save failed: ${error.message}</p>`;
+                } else {
+                    results.innerHTML = '<p style="color: green;">✅ Test entry saved successfully to Supabase!</p>';
+                }
+            } catch (error) {
+                results.innerHTML = `<p style="color: red;">❌ Save error: ${error.message}</p>`;
+            }
+        };
+    </script>
+</body>
+</html>

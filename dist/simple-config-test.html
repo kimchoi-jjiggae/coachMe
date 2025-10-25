@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Config Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background: #d1fae5; border-color: #10b981; }
+        .error { background: #fee2e2; border-color: #ef4444; }
+        .info { background: #d1ecf1; border-color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Simple Configuration Test</h1>
+    
+    <div id="results"></div>
+    
+    <!-- Load configuration scripts -->
+    <script src="env-config.js"></script>
+    <script src="production-config.js"></script>
+    <script src="my-keys.js"></script>
+    <script src="config.js"></script>
+    
+    <script>
+        function showResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = message;
+            document.getElementById('results').appendChild(div);
+        }
+        
+        function testConfiguration() {
+            showResult('<h3>Testing Configuration Loading...</h3>', 'info');
+            
+            // Test 1: Check if scripts loaded
+            showResult(`<strong>Script Loading Test:</strong><br>
+                ENV_CONFIG: ${typeof window.ENV_CONFIG}<br>
+                PRODUCTION_CONFIG: ${typeof window.PRODUCTION_CONFIG}<br>
+                MY_KEYS: ${typeof window.MY_KEYS}<br>
+                CONFIG: ${typeof window.CONFIG}`, 'info');
+            
+            // Test 2: Check ENV_CONFIG content
+            if (window.ENV_CONFIG) {
+                showResult(`<strong>ENV_CONFIG Content:</strong><br>
+                    SUPABASE_URL: ${window.ENV_CONFIG.SUPABASE_URL || 'undefined'}<br>
+                    SUPABASE_ANON_KEY: ${window.ENV_CONFIG.SUPABASE_ANON_KEY ? 'Present' : 'Missing'}`, 'info');
+            } else {
+                showResult('<strong>ENV_CONFIG is undefined!</strong>', 'error');
+            }
+            
+            // Test 3: Check localStorage
+            showResult(`<strong>localStorage:</strong><br>
+                supabaseUrl: ${localStorage.getItem('supabaseUrl') || 'empty'}<br>
+                supabaseKey: ${localStorage.getItem('supabaseKey') || 'empty'}`, 'info');
+            
+            // Test 4: Final configuration
+            let finalUrl = '';
+            let finalKey = '';
+            let source = '';
+            
+            if (window.ENV_CONFIG?.SUPABASE_URL && window.ENV_CONFIG?.SUPABASE_ANON_KEY) {
+                finalUrl = window.ENV_CONFIG.SUPABASE_URL;
+                finalKey = window.ENV_CONFIG.SUPABASE_ANON_KEY;
+                source = 'ENV_CONFIG';
+            } else if (window.PRODUCTION_CONFIG?.SUPABASE_URL && window.PRODUCTION_CONFIG?.SUPABASE_ANON_KEY) {
+                finalUrl = window.PRODUCTION_CONFIG.SUPABASE_URL;
+                finalKey = window.PRODUCTION_CONFIG.SUPABASE_ANON_KEY;
+                source = 'PRODUCTION_CONFIG';
+            } else if (window.MY_KEYS?.SUPABASE_URL && window.MY_KEYS?.SUPABASE_ANON_KEY) {
+                finalUrl = window.MY_KEYS.SUPABASE_URL;
+                finalKey = window.MY_KEYS.SUPABASE_ANON_KEY;
+                source = 'MY_KEYS';
+            } else {
+                finalUrl = localStorage.getItem('supabaseUrl');
+                finalKey = localStorage.getItem('supabaseKey');
+                source = 'localStorage';
+            }
+            
+            showResult(`<strong>Final Configuration:</strong><br>
+                Source: ${source}<br>
+                URL: ${finalUrl ? '✅ Found' : '❌ Missing'}<br>
+                Key: ${finalKey ? '✅ Found' : '❌ Missing'}`, 
+                finalUrl && finalKey ? 'success' : 'error');
+        }
+        
+        // Run test when page loads
+        window.onload = function() {
+            setTimeout(testConfiguration, 1000);
+        };
+    </script>
+</body>
+</html>

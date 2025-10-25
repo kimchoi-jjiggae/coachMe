@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Journal - GitHub Pages</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <style>
+        .github-notice {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            color: #0c4a6e;
+        }
+        .github-notice h3 {
+            margin: 0 0 0.5rem 0;
+            color: #0369a1;
+        }
+        .github-notice p {
+            margin: 0.5rem 0;
+        }
+        .github-notice .highlight {
+            background: #e0f2fe;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="journal-page">
+        <!-- GitHub Pages Notice -->
+        <div class="github-notice">
+            <h3>🚀 GitHub Pages Version</h3>
+            <p>This is the <span class="highlight">GitHub Pages</span> version of Voice Journal.</p>
+            <p><strong>Features:</strong> Voice-to-text journaling, enhanced local title generation, cloud sync with Supabase</p>
+            <p><strong>Note:</strong> AI title generation requires a server. This version uses enhanced local title generation.</p>
+        </div>
+        
+        <!-- Navigation -->
+        <div class="navigation">
+            <a href="chat.html" class="nav-btn">💬 CHAT MODE</a>
+            <a href="index.html" class="nav-btn active">📝 WRITE MODE</a>
+        </div>
+        
+        <!-- Header -->
+        <header class="journal-header">
+            <h1>Voice Journal</h1>
+            <p>Write your thoughts with voice or text</p>
+        </header>
+        
+        <!-- Journal Form -->
+        <form id="journalForm" class="journal-form">
+            <div class="form-group">
+                <label for="entryTitle">Entry Title</label>
+                <input type="text" id="entryTitle" class="entry-title" placeholder="Enter a title for your entry...">
+            </div>
+            
+            <div class="voice-controls">
+                <button id="voiceBtn" class="btn-voice-journal idle">
+                    🎤 CLICK TO START VOICE INPUT
+                </button>
+                <button id="permissionBtn" class="btn-permission" style="display: none;">
+                    🔒 GRANT MICROPHONE PERMISSION
+                </button>
+                <div id="voiceStatus" class="voice-status">
+                    <span id="voiceStatusText">Ready to listen</span>
+                </div>
+            </div>
+            
+            <textarea id="entryContent" class="entry-content" placeholder=""></textarea>
+            
+            <div class="form-actions">
+                <button type="button" id="clearBtn" class="btn-clear">Clear</button>
+                <button type="button" id="generateTitleBtn" class="btn-generate-title">📝 GENERATE TITLE</button>
+                <button type="submit" id="saveBtn" class="btn-save">Save Entry</button>
+            </div>
+            
+            <div style="text-align: center; margin-top: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <a href="settings.html" style="color: #6366f1; text-decoration: none; font-size: 1rem; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                    ⚙️ Notification Settings
+                </a>
+                <div style="font-size: 0.8rem; color: #6b7280; margin-top: 0.5rem;">
+                    Set daily reminders to write in your journal
+                </div>
+            </div>
+        </form>
+        
+        <!-- Entries List -->
+        <div class="entries-section">
+            <h2>Your Entries</h2>
+            <div id="entriesList" class="entries-list">
+                <p class="no-entries">No entries yet. Start writing your first journal entry!</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="env-config.js"></script>
+    <script src="journal-app.js"></script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Test - Voice Journal</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background: #d1fae5; border-color: #10b981; }
+        .error { background: #fee2e2; border-color: #ef4444; }
+        .info { background: #d1ecf1; border-color: #0c5460; }
+        button { padding: 10px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🧪 PWA Test Page</h1>
+    
+    <div class="test">
+        <h3>Service Worker Status</h3>
+        <div id="swStatus">Checking...</div>
+    </div>
+    
+    <div class="test">
+        <h3>PWA Installation</h3>
+        <div id="pwaStatus">Checking...</div>
+    </div>
+    
+    <div class="test">
+        <h3>Navigation Test</h3>
+        <button onclick="testNavigation()">Test Navigation</button>
+        <div id="navStatus"></div>
+    </div>
+    
+    <div class="test">
+        <h3>Links</h3>
+        <a href="index.html" style="display: block; margin: 5px 0;">🏠 Main App</a>
+        <a href="journal.html" style="display: block; margin: 5px 0;">📝 Journal Page</a>
+    </div>
+
+    <script>
+        // Test service worker
+        function checkServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistration().then(registration => {
+                    if (registration) {
+                        document.getElementById('swStatus').innerHTML = 
+                            '<div class="success">✅ Service Worker is registered</div>';
+                    } else {
+                        document.getElementById('swStatus').innerHTML = 
+                            '<div class="error">❌ Service Worker not registered</div>';
+                    }
+                });
+            } else {
+                document.getElementById('swStatus').innerHTML = 
+                    '<div class="error">❌ Service Worker not supported</div>';
+            }
+        }
+        
+        // Test PWA installation
+        function checkPWA() {
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                document.getElementById('pwaStatus').innerHTML = 
+                    '<div class="success">✅ Running as PWA</div>';
+            } else {
+                document.getElementById('pwaStatus').innerHTML = 
+                    '<div class="info">ℹ️ Running in browser (not PWA)</div>';
+            }
+        }
+        
+        // Test navigation
+        function testNavigation() {
+            document.getElementById('navStatus').innerHTML = 
+                '<div class="info">Testing navigation...</div>';
+            
+            // Test if we can navigate to other pages
+            fetch('./index.html')
+                .then(response => {
+                    if (response.ok) {
+                        document.getElementById('navStatus').innerHTML = 
+                            '<div class="success">✅ Navigation working</div>';
+                    } else {
+                        document.getElementById('navStatus').innerHTML = 
+                            '<div class="error">❌ Navigation failed: ' + response.status + '</div>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('navStatus').innerHTML = 
+                        '<div class="error">❌ Navigation error: ' + error.message + '</div>';
+                });
+        }
+        
+        // Run tests when page loads
+        window.onload = function() {
+            checkServiceWorker();
+            checkPWA();
+        };
+    </script>
+    
+    <script>
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(function(err) {
+                        console.error('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>

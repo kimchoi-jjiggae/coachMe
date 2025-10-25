@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Voice Journal</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <style>
+        .settings-page {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .settings-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .settings-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #1f2937;
+        }
+        
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+        
+        .setting-label {
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .setting-description {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #6366f1;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .time-input {
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        .message-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .btn-test {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .btn-test:hover {
+            background: #059669;
+        }
+        
+        .btn-save {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            width: 100%;
+            margin-top: 1rem;
+        }
+        
+        .btn-save:hover {
+            background: #4f46e5;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+        }
+        
+        .back-link:hover {
+            color: #4f46e5;
+        }
+        
+        .status-message {
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            font-weight: 500;
+        }
+        
+        .status-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-page">
+        <a href="index.html" class="back-link">
+            ← Back to Journal
+        </a>
+        
+        <h1 class="settings-title">Notification Settings</h1>
+        
+        <div class="settings-section">
+            <div class="setting-item">
+                <div>
+                    <div class="setting-label">Daily Reminders</div>
+                    <div class="setting-description">Get reminded to write in your journal every day</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="notificationsEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div class="setting-item">
+                <div>
+                    <div class="setting-label">Reminder Time</div>
+                    <div class="setting-description">Choose when you want to be reminded</div>
+                </div>
+                <input type="time" id="notificationTime" class="time-input" value="20:00">
+            </div>
+            
+            <div class="setting-item">
+                <div>
+                    <div class="setting-label">Custom Message</div>
+                    <div class="setting-description">Personalize your reminder message</div>
+                </div>
+            </div>
+            
+            <textarea id="notificationMessage" class="message-input" placeholder="Time for your daily journal reflection! 📝"></textarea>
+            
+            <div class="setting-item">
+                <div>
+                    <div class="setting-label">Test Notification</div>
+                    <div class="setting-description">Send a test notification to make sure it works</div>
+                </div>
+                <button id="testNotification" class="btn-test">Test Now</button>
+            </div>
+        </div>
+        
+        <button id="saveSettings" class="btn-save">Save Settings</button>
+        
+        <div style="text-align: center; margin-top: 2rem; padding: 1rem; background: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0;">
+            <h3 style="margin-top: 0; color: #166534;">📅 Alternative: Calendar Reminders</h3>
+            <p style="margin: 0.5rem 0; color: #166534;">For more reliable reminders, try calendar integration:</p>
+            <a href="calendar-notification.html" style="color: #10b981; text-decoration: none; font-size: 1rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 2px solid #10b981;">
+                📅 Setup Calendar Reminders
+            </a>
+            <div style="font-size: 0.8rem; color: #166534; margin-top: 0.5rem;">
+                Free, reliable, works on all devices
+            </div>
+        </div>
+        
+        <div id="statusMessage" class="status-message" style="display: none;"></div>
+    </div>
+    
+    <script src="env-config.js"></script>
+    <script src="journal-app.js"></script>
+    <script>
+        // Settings page functionality
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Test localStorage availability first
+            try {
+                const testKey = 'test_storage_' + Date.now();
+                localStorage.setItem(testKey, 'test');
+                localStorage.removeItem(testKey);
+                console.log('localStorage is working');
+            } catch (error) {
+                console.error('localStorage not available:', error);
+                showStatus('Storage not available. Please check browser settings.', 'error');
+                return;
+            }
+            
+            // Wait for journalApp to be available (but don't require it)
+            let attempts = 0;
+            while (typeof journalApp === 'undefined' && attempts < 50) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            if (typeof journalApp === 'undefined') {
+                console.warn('journalApp not available, using localStorage only');
+            }
+            
+            // Load current settings
+            await loadSettings();
+            
+            // Set up event listeners
+            document.getElementById('saveSettings').addEventListener('click', saveSettings);
+            document.getElementById('testNotification').addEventListener('click', testNotification);
+        });
+        
+        async function loadSettings() {
+            try {
+                let settings = null;
+                
+                // For Safari PWA, prioritize localStorage
+                const isSafariPWA = window.matchMedia('(display-mode: standalone)').matches && 
+                                   navigator.userAgent.includes('Safari') && 
+                                   !navigator.userAgent.includes('Chrome');
+                
+                console.log('Is Safari PWA:', isSafariPWA);
+                
+                if (isSafariPWA) {
+                    // Safari PWA: try localStorage first
+                    const stored = localStorage.getItem('notificationSettings');
+                    if (stored) {
+                        settings = JSON.parse(stored);
+                        console.log('Loaded settings from localStorage (Safari PWA):', settings);
+                    }
+                } else {
+                    // Other browsers: try IndexedDB first
+                    if (typeof journalApp !== 'undefined') {
+                        try {
+                            settings = await journalApp.getNotificationSettings();
+                            console.log('Loaded settings via journalApp:', settings);
+                        } catch (error) {
+                            console.warn('Failed to load via journalApp, trying localStorage fallback:', error);
+                        }
+                    }
+                    
+                    // Fallback: load from localStorage
+                    if (!settings) {
+                        const stored = localStorage.getItem('notificationSettings');
+                        if (stored) {
+                            settings = JSON.parse(stored);
+                            console.log('Loaded settings from localStorage:', settings);
+                        }
+                    }
+                }
+                
+                // Use default settings if nothing found
+                if (!settings) {
+                    settings = {
+                        enabled: true,
+                        time: '20:00',
+                        message: "Time for your daily journal reflection! 📝"
+                    };
+                    console.log('Using default settings:', settings);
+                }
+                
+                document.getElementById('notificationsEnabled').checked = settings.enabled;
+                document.getElementById('notificationTime').value = settings.time;
+                document.getElementById('notificationMessage').value = settings.message;
+                
+            } catch (error) {
+                console.error('Failed to load settings:', error);
+                showStatus('Failed to load settings: ' + error.message, 'error');
+            }
+        }
+        
+        async function saveSettings() {
+            try {
+                const settings = {
+                    enabled: document.getElementById('notificationsEnabled').checked,
+                    time: document.getElementById('notificationTime').value,
+                    message: document.getElementById('notificationMessage').value
+                };
+                
+                console.log('Saving settings:', settings);
+                console.log('Browser:', navigator.userAgent);
+                console.log('Is PWA:', window.matchMedia('(display-mode: standalone)').matches);
+                
+                // Always use localStorage for Safari PWA compatibility
+                try {
+                    localStorage.setItem('notificationSettings', JSON.stringify(settings));
+                    console.log('Settings saved to localStorage successfully');
+                    
+                    // Try to save to IndexedDB if journalApp is available (non-blocking)
+                    if (typeof journalApp !== 'undefined') {
+                        try {
+                            await journalApp.saveNotificationSettings(settings);
+                            console.log('Also saved to IndexedDB successfully');
+                        } catch (indexedError) {
+                            console.warn('IndexedDB save failed, but localStorage worked:', indexedError);
+                        }
+                    }
+                    
+                    // Try to schedule notification if enabled
+                    if (settings.enabled && typeof journalApp !== 'undefined') {
+                        try {
+                            await journalApp.scheduleDailyNotification(settings.time);
+                            console.log('Notification scheduled successfully');
+                        } catch (notifError) {
+                            console.warn('Notification scheduling failed:', notifError);
+                        }
+                    }
+                    
+                    showStatus('Settings saved successfully!', 'success');
+                    
+                } catch (localError) {
+                    console.error('localStorage save failed:', localError);
+                    throw new Error('Failed to save to localStorage: ' + localError.message);
+                }
+                
+            } catch (error) {
+                console.error('Failed to save settings:', error);
+                showStatus('Failed to save settings: ' + error.message, 'error');
+            }
+        }
+        
+        async function testNotification() {
+            try {
+                await journalApp.testNotification();
+                showStatus('Test notification sent!', 'success');
+            } catch (error) {
+                console.error('Failed to send test notification:', error);
+                showStatus('Failed to send test notification', 'error');
+            }
+        }
+        
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-message status-${type}`;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

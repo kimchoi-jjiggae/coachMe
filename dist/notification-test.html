@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Test - Voice Journal</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        
+        .status {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-weight: 500;
+        }
+        
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+        
+        .status.info {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+        
+        button {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        button:hover {
+            background: #4f46e5;
+        }
+        
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        .instructions {
+            background: #f3f4f6;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .step {
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #6366f1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 Notification Test</h1>
+        
+        <div id="status" class="status info">
+            Click "Request Permission" to test notifications
+        </div>
+        
+        <button id="requestPermission" onclick="requestPermission()">Request Permission</button>
+        <button id="testNotification" onclick="testNotification()" disabled>Test Notification</button>
+        <button id="checkPermission" onclick="checkPermission()">Check Status</button>
+        
+        <div class="instructions">
+            <h3>📱 How to Enable Notifications:</h3>
+            
+            <div class="step">
+                <strong>iPhone/iPad (Safari):</strong><br>
+                ⚠️ <strong>iOS Safari has limited notification support!</strong><br>
+                1. Try "Request Permission" above<br>
+                2. If you get "not supported" error, this is normal for iOS Safari<br>
+                3. For best results, use Chrome or Firefox on iOS<br>
+                4. Or try the PWA version: Add to Home Screen first
+            </div>
+            
+            <div class="step">
+                <strong>Mac (Safari):</strong><br>
+                1. Click "Request Permission" above<br>
+                2. Click "Allow" when prompted<br>
+                3. Or go to Safari → Settings for This Website → Notifications → Allow
+            </div>
+            
+            <div class="step">
+                <strong>Android (Chrome):</strong><br>
+                1. Tap "Request Permission" above<br>
+                2. Tap "Allow" when prompted<br>
+                3. Or go to Chrome → Settings → Site settings → Notifications
+            </div>
+        </div>
+        
+        <div id="debugInfo" style="margin-top: 1rem; font-size: 0.8rem; color: #6b7280;">
+            <strong>Debug Info:</strong><br>
+            <span id="browserInfo"></span><br>
+            <span id="permissionInfo"></span>
+        </div>
+    </div>
+    
+    <script>
+        // Display browser info
+        document.getElementById('browserInfo').textContent = 
+            `Browser: ${navigator.userAgent}`;
+        
+        // Check initial permission status
+        checkPermission();
+        
+        async function requestPermission() {
+            const status = document.getElementById('status');
+            const testBtn = document.getElementById('testNotification');
+            
+            try {
+                // Check if Notification API is available
+                if (typeof Notification === 'undefined') {
+                    status.textContent = '❌ Notifications not supported on this device/browser. iOS Safari has limited notification support.';
+                    status.className = 'status error';
+                    testBtn.disabled = true;
+                    return;
+                }
+                
+                status.textContent = 'Requesting notification permission...';
+                status.className = 'status info';
+                
+                // Check current permission first
+                if (Notification.permission === 'granted') {
+                    status.textContent = '✅ Permission already granted! You can test notifications.';
+                    status.className = 'status success';
+                    testBtn.disabled = false;
+                    return;
+                }
+                
+                if (Notification.permission === 'denied') {
+                    status.textContent = '❌ Permission denied. Please enable notifications in your browser settings.';
+                    status.className = 'status error';
+                    testBtn.disabled = true;
+                    return;
+                }
+                
+                const permission = await Notification.requestPermission();
+                
+                if (permission === 'granted') {
+                    status.textContent = '✅ Permission granted! You can now test notifications.';
+                    status.className = 'status success';
+                    testBtn.disabled = false;
+                } else if (permission === 'denied') {
+                    status.textContent = '❌ Permission denied. Please enable notifications in your browser settings.';
+                    status.className = 'status error';
+                    testBtn.disabled = true;
+                } else {
+                    status.textContent = '⚠️ Permission dismissed. Please try again and click "Allow".';
+                    status.className = 'status error';
+                    testBtn.disabled = true;
+                }
+                
+                checkPermission();
+                
+            } catch (error) {
+                status.textContent = '❌ Error requesting permission: ' + error.message;
+                status.className = 'status error';
+                console.error('Permission request failed:', error);
+            }
+        }
+        
+        async function testNotification() {
+            const status = document.getElementById('status');
+            
+            try {
+                // Check if Notification API is available
+                if (typeof Notification === 'undefined') {
+                    status.textContent = '❌ Notifications not supported on this device. iOS Safari has limited notification support.';
+                    status.className = 'status error';
+                    return;
+                }
+                
+                if (Notification.permission !== 'granted') {
+                    status.textContent = '❌ Permission not granted. Please request permission first.';
+                    status.className = 'status error';
+                    return;
+                }
+                
+                // Try service worker first
+                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                    try {
+                        navigator.serviceWorker.controller.postMessage({
+                            type: 'TEST_NOTIFICATION'
+                        });
+                        status.textContent = '✅ Test notification sent via service worker! Check your notification area.';
+                        status.className = 'status success';
+                        return;
+                    } catch (swError) {
+                        console.warn('Service worker notification failed, trying direct:', swError);
+                    }
+                }
+                
+                // Fallback to direct notification
+                const notification = new Notification('Voice Journal Test', {
+                    body: 'This is a test notification! If you see this, notifications are working. 🎉',
+                    icon: './icons/icon-192x192.svg',
+                    tag: 'test-notification'
+                });
+                
+                status.textContent = '✅ Test notification sent! Check your notification area.';
+                status.className = 'status success';
+                
+                // Auto-close after 5 seconds
+                setTimeout(() => {
+                    notification.close();
+                }, 5000);
+                
+            } catch (error) {
+                status.textContent = '❌ Failed to send test notification: ' + error.message;
+                status.className = 'status error';
+                console.error('Test notification failed:', error);
+            }
+        }
+        
+        function checkPermission() {
+            const permissionInfo = document.getElementById('permissionInfo');
+            const testBtn = document.getElementById('testNotification');
+            
+            // Check if Notification API is available
+            if (typeof Notification === 'undefined') {
+                permissionInfo.textContent = '❌ Notifications: NOT SUPPORTED (iOS Safari limitation)';
+                testBtn.disabled = true;
+                return;
+            }
+            
+            const permission = Notification.permission;
+            let statusText = '';
+            
+            switch (permission) {
+                case 'granted':
+                    statusText = '✅ Notifications: ALLOWED';
+                    testBtn.disabled = false;
+                    break;
+                case 'denied':
+                    statusText = '❌ Notifications: DENIED (enable in browser settings)';
+                    testBtn.disabled = true;
+                    break;
+                case 'default':
+                    statusText = '⚠️ Notifications: NOT REQUESTED (click "Request Permission")';
+                    testBtn.disabled = true;
+                    break;
+            }
+            
+            permissionInfo.textContent = statusText;
+        }
+        
+        // Check permission status every 2 seconds
+        setInterval(checkPermission, 2000);
+    </script>
+</body>
+</html>

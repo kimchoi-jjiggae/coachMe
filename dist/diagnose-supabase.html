@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Diagnostic Tool</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; max-width: 1000px; }
+        .section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { background: #d1fae5; border-color: #10b981; }
+        .error { background: #fee2e2; border-color: #ef4444; }
+        .warning { background: #fef3c7; border-color: #f59e0b; }
+        button { padding: 10px 20px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #1d4ed8; }
+        .code { background: #f5f5f5; padding: 10px; border-radius: 5px; font-family: monospace; margin: 10px 0; }
+        #results { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Supabase Diagnostic Tool</h1>
+    
+    <div class="section">
+        <h3>1. Check Configuration</h3>
+        <button onclick="checkConfig()">Check API Keys & Configuration</button>
+        <div id="configResults"></div>
+    </div>
+    
+    <div class="section">
+        <h3>2. Test Supabase Connection</h3>
+        <button onclick="testConnection()">Test Supabase Connection</button>
+        <div id="connectionResults"></div>
+    </div>
+    
+    <div class="section">
+        <h3>3. Check Database Tables</h3>
+        <button onclick="checkTables()">Check if Tables Exist</button>
+        <div id="tableResults"></div>
+    </div>
+    
+    <div class="section">
+        <h3>4. Test Save to Supabase</h3>
+        <button onclick="testSave()">Test Saving Entry to Supabase</button>
+        <div id="saveResults"></div>
+    </div>
+    
+    <div class="section">
+        <h3>5. Check Local Storage</h3>
+        <button onclick="checkLocalStorage()">Check Local Entries</button>
+        <div id="localResults"></div>
+    </div>
+    
+    <div class="section">
+        <h3>6. Manual Supabase Check</h3>
+        <p>Go to your Supabase dashboard and check:</p>
+        <div class="code">
+            1. Open: https://supabase.com/dashboard/project/mzalbqlqedfwzltmsiqd/table-editor
+            2. Look for "conversations" table
+            3. Check if there are any entries there
+        </div>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js@2';
+        
+        let supabase = null;
+        let config = {};
+        
+        // Load configuration
+        function loadConfig() {
+            if (window.MY_KEYS?.SUPABASE_URL && window.MY_KEYS?.SUPABASE_ANON_KEY) {
+                config.supabaseUrl = window.MY_KEYS.SUPABASE_URL;
+                config.supabaseKey = window.MY_KEYS.SUPABASE_ANON_KEY;
+                config.source = 'MY_KEYS';
+            } else if (window.CONFIG?.SUPABASE_URL && window.CONFIG?.SUPABASE_ANON_KEY) {
+                config.supabaseUrl = window.CONFIG.SUPABASE_URL;
+                config.supabaseKey = window.CONFIG.SUPABASE_ANON_KEY;
+                config.source = 'CONFIG';
+            } else {
+                config.supabaseUrl = localStorage.getItem('supabaseUrl');
+                config.supabaseKey = localStorage.getItem('supabaseKey');
+                config.source = 'localStorage';
+            }
+            
+            if (config.supabaseUrl && config.supabaseKey) {
+                supabase = createClient(config.supabaseUrl, config.supabaseKey);
+            }
+        }
+        
+        window.checkConfig = function() {
+            loadConfig();
+            const results = document.getElementById('configResults');
+            
+            let html = '<h4>Configuration Status:</h4>';
+            html += `<p><strong>Source:</strong> ${config.source || 'Not found'}</p>`;
+            html += `<p><strong>Supabase URL:</strong> ${config.supabaseUrl ? '✅ Present' : '❌ Missing'}</p>`;
+            html += `<p><strong>Supabase Key:</strong> ${config.supabaseKey ? '✅ Present' : '❌ Missing'}</p>`;
+            
+            if (config.supabaseUrl && config.supabaseKey) {
+                html += '<p class="success">✅ Configuration loaded successfully</p>';
+            } else {
+                html += '<p class="error">❌ Configuration incomplete</p>';
+            }
+            
+            results.innerHTML = html;
+        };
+        
+        window.testConnection = async function() {
+            loadConfig();
+            const results = document.getElementById('connectionResults');
+            results.innerHTML = '<p>Testing connection...</p>';
+            
+            if (!supabase) {
+                results.innerHTML = '<p class="error">❌ Supabase not configured</p>';
+                return;
+            }
+            
+            try {
+                // Test basic connection
+                const { data, error } = await supabase
+                    .from('conversations')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) {
+                    results.innerHTML = `<p class="error">❌ Connection failed: ${error.message}</p>`;
+                } else {
+                    results.innerHTML = '<p class="success">✅ Supabase connection successful!</p>';
+                }
+            } catch (error) {
+                results.innerHTML = `<p class="error">❌ Connection error: ${error.message}</p>`;
+            }
+        };
+        
+        window.checkTables = async function() {
+            loadConfig();
+            const results = document.getElementById('tableResults');
+            results.innerHTML = '<p>Checking tables...</p>';
+            
+            if (!supabase) {
+                results.innerHTML = '<p class="error">❌ Supabase not configured</p>';
+                return;
+            }
+            
+            try {
+                // Check conversations table
+                const { data: convData, error: convError } = await supabase
+                    .from('conversations')
+                    .select('*')
+                    .limit(1);
+                
+                if (convError) {
+                    results.innerHTML = `<p class="error">❌ conversations table error: ${convError.message}</p>`;
+                    return;
+                }
+                
+                // Check messages table
+                const { data: msgData, error: msgError } = await supabase
+                    .from('messages')
+                    .select('*')
+                    .limit(1);
+                
+                if (msgError) {
+                    results.innerHTML = `<p class="warning">⚠️ conversations table exists, but messages table error: ${msgError.message}</p>`;
+                } else {
+                    results.innerHTML = '<p class="success">✅ Both tables exist and are accessible!</p>';
+                }
+                
+            } catch (error) {
+                results.innerHTML = `<p class="error">❌ Table check error: ${error.message}</p>`;
+            }
+        };
+        
+        window.testSave = async function() {
+            loadConfig();
+            const results = document.getElementById('saveResults');
+            results.innerHTML = '<p>Testing save...</p>';
+            
+            if (!supabase) {
+                results.innerHTML = '<p class="error">❌ Supabase not configured</p>';
+                return;
+            }
+            
+            try {
+                const testEntry = {
+                    id: 'diagnostic_test_' + Date.now(),
+                    user_id: 'test_user_' + Date.now(),
+                    user_message: 'This is a diagnostic test entry to verify Supabase save functionality.',
+                    ai_response: '',
+                    date: new Date().toISOString(),
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                
+                const { data, error } = await supabase
+                    .from('conversations')
+                    .insert([testEntry]);
+                
+                if (error) {
+                    results.innerHTML = `<p class="error">❌ Save failed: ${error.message}</p>`;
+                } else {
+                    results.innerHTML = '<p class="success">✅ Test entry saved successfully to Supabase!</p>';
+                    results.innerHTML += `<p>Entry ID: ${testEntry.id}</p>`;
+                }
+            } catch (error) {
+                results.innerHTML = `<p class="error">❌ Save error: ${error.message}</p>`;
+            }
+        };
+        
+        window.checkLocalStorage = function() {
+            const results = document.getElementById('localResults');
+            const entries = JSON.parse(localStorage.getItem('journalEntries') || '[]');
+            
+            let html = `<h4>Local Storage Entries (${entries.length}):</h4>`;
+            
+            if (entries.length === 0) {
+                html += '<p>No entries in local storage.</p>';
+            } else {
+                entries.forEach((entry, index) => {
+                    html += `
+                        <div style="border: 1px solid #ddd; padding: 10px; margin: 5px 0; border-radius: 5px;">
+                            <strong>Entry ${index + 1}:</strong> ${entry.title || 'Untitled'}<br>
+                            <strong>ID:</strong> ${entry.id}<br>
+                            <strong>Date:</strong> ${new Date(entry.date).toLocaleString()}<br>
+                            <strong>Content:</strong> ${entry.content.substring(0, 100)}...
+                        </div>
+                    `;
+                });
+            }
+            
+            results.innerHTML = html;
+        };
+        
+        // Load config on page load
+        window.onload = function() {
+            loadConfig();
+        };
+    </script>
+</body>
+</html>

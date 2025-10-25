@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Journal - Daily Conversations</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="description" content="Voice-powered journal with AI conversations">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <style>
+        /* Mobile-specific improvements */
+        @media (max-width: 768px) {
+            .header-controls {
+                flex-direction: column;
+                gap: 0.5rem;
+                width: 100%;
+            }
+            
+            .header-controls .btn {
+                width: 100%;
+                max-width: 200px;
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .chat-container {
+                padding: 1rem;
+            }
+            
+            .voice-controls {
+                margin: 1rem 0;
+            }
+            
+            .btn-voice {
+                width: 100%;
+                max-width: 300px;
+                padding: 1rem 1.5rem;
+                font-size: 1rem;
+            }
+            
+            .message {
+                margin: 0.75rem 0;
+                padding: 1rem;
+            }
+            
+            .message-content {
+                font-size: 0.95rem;
+                line-height: 1.5;
+            }
+            
+            .sidebar {
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .journal-entries {
+                padding: 0.75rem;
+            }
+            
+            .journal-entry {
+                margin-bottom: 1rem;
+                padding: 1rem;
+            }
+            
+            .entry-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .entry-preview {
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header {
+                padding: 0.5rem 0.75rem;
+            }
+            
+            .header h1 {
+                font-size: 1.1rem;
+            }
+            
+            .header-controls .btn {
+                padding: 0.625rem 0.875rem;
+                font-size: 0.85rem;
+            }
+            
+            .btn-voice {
+                padding: 0.875rem 1.25rem;
+                font-size: 0.95rem;
+            }
+            
+            .message {
+                margin: 0.5rem 0;
+                padding: 0.75rem;
+            }
+            
+            .message-content {
+                font-size: 0.9rem;
+            }
+            
+            .journal-entry {
+                padding: 0.75rem;
+            }
+            
+            .entry-header h3 {
+                font-size: 1.1rem;
+            }
+            
+            .entry-preview {
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <h1>🎙️ Voice Journal</h1>
+        <div class="header-controls">
+            <span id="apiStatus" class="api-status">🔴 API Not Configured</span>
+            <button id="debugBtn" class="btn btn-secondary" style="font-size: 0.75rem;">🐛 Debug</button>
+            <button id="searchBtn" class="btn btn-secondary">🔍 Search</button>
+            <button id="settingsBtn" class="btn btn-secondary">⚙️ Settings</button>
+            <a href="index.html" class="btn btn-secondary">📝 Write</a>
+        </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Chat Interface -->
+            <div class="chat-container">
+                <div id="chatMessages" class="chat-messages">
+                    <div class="welcome-message">
+                        <h2>Welcome to your Voice Journal!</h2>
+                        <p>🎤 AI chat functionality is currently disabled. Use the <a href="index.html">📝 Journal page</a> for voice-to-text writing and cloud storage.</p>
+                        <p><strong>💡 Note:</strong> This app now focuses on voice-to-text journaling with Supabase cloud sync.</p>
+                    </div>
+                </div>
+                
+                <!-- Input Area -->
+                <div class="input-area">
+                    <div class="input-container">
+                        <textarea id="messageInput" placeholder="Type your message or use voice..." rows="3"></textarea>
+                        <div class="input-controls">
+                            <button id="voiceBtn" class="btn btn-voice">
+                                <span class="voice-icon">🎤</span>
+                                <span class="voice-text">Click to start listening</span>
+                            </button>
+                            <button id="sendBtn" class="btn btn-primary">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar for Journal Entries -->
+            <aside id="sidebar" class="sidebar">
+                <div class="sidebar-header">
+                    <h3>📖 Journal Entries</h3>
+                    <button id="closeSidebar" class="btn btn-close">×</button>
+                </div>
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Search past entries...">
+                </div>
+                <div id="journalEntries" class="journal-entries">
+                    <!-- Journal entries will be populated here -->
+                </div>
+            </aside>
+        </main>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Settings</h3>
+                    <button id="closeSettings" class="btn btn-close">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="setting-group">
+                        <label for="apiKey">OpenAI API Key:</label>
+                        <input type="password" id="apiKey" placeholder="Enter your OpenAI API key">
+                        <small>Your API key is stored locally and never shared.</small>
+                        <button id="testApiKey" class="btn btn-secondary" style="margin-top: 0.5rem;">Test API Key</button>
+                    </div>
+                    <div class="setting-group">
+                        <label for="voiceEnabled">Enable Voice:</label>
+                        <input type="checkbox" id="voiceEnabled" checked>
+                    </div>
+                    <div class="setting-group">
+                        <label for="autoSave">Auto-save conversations:</label>
+                        <input type="checkbox" id="autoSave" checked>
+                    </div>
+                    <div class="setting-group">
+                        <label for="autoListen">Auto-start voice listening:</label>
+                        <input type="checkbox" id="autoListen">
+                        <small>Automatically start listening when the app loads</small>
+                    </div>
+                    <div class="setting-group">
+                        <label for="supabaseUrl">Supabase URL:</label>
+                        <input type="url" id="supabaseUrl" placeholder="https://your-project.supabase.co">
+                        <small>Your Supabase project URL for cloud sync</small>
+                    </div>
+                    <div class="setting-group">
+                        <label for="supabaseKey">Supabase Anon Key:</label>
+                        <input type="password" id="supabaseKey" placeholder="Your Supabase anon key">
+                        <small>Your Supabase anonymous key for authentication</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="saveSettings" class="btn btn-primary">Save Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loadingIndicator" class="loading hidden">
+        <div class="spinner"></div>
+        <p>AI is thinking...</p>
+    </div>
+
+    <!-- Voice Recording Indicator -->
+    <div id="voiceIndicator" class="voice-indicator hidden">
+        <div class="pulse"></div>
+        <p>Listening...</p>
+    </div>
+
+    <script src="env-config.js"></script>
+    <script src="production-config.js"></script>
+    <script src="my-keys.js"></script>
+    <script src="config.js"></script>
+    <script>
+        // Check if configuration is available
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait a bit for all scripts to load
+            setTimeout(function() {
+                // Check for Supabase configuration (OpenAI disabled)
+                const hasConfig = window.ENV_CONFIG?.SUPABASE_URL || 
+                                window.PRODUCTION_CONFIG?.SUPABASE_URL || 
+                                window.MY_KEYS?.SUPABASE_URL || 
+                                window.CONFIG?.SUPABASE_URL || 
+                                localStorage.getItem('supabaseUrl');
+                
+                if (!hasConfig) {
+                    // Redirect to setup page if no configuration found
+                    window.location.href = 'setup.html';
+                }
+            }, 100);
+        });
+    </script>
+    <script src="app.js"></script>
+    <script>
+        // Mobile-compatible service worker registration
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                console.log('Attempting to register service worker...');
+                
+                // Use a more compatible registration approach
+                navigator.serviceWorker.register('./sw.js', {
+                    scope: './'
+                })
+                .then(function(registration) {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    
+                    // Handle updates
+                    registration.addEventListener('updatefound', function() {
+                        console.log('Service worker update found');
+                    });
+                })
+                .catch(function(err) {
+                    console.error('ServiceWorker registration failed: ', err);
+                    console.error('Error details:', err.message);
+                    
+                    // Fallback: try without scope
+                    navigator.serviceWorker.register('./sw.js')
+                        .then(function(registration) {
+                            console.log('ServiceWorker registration successful (fallback)');
+                        })
+                        .catch(function(fallbackErr) {
+                            console.error('ServiceWorker fallback registration failed: ', fallbackErr);
+                        });
+                });
+            } else {
+                console.log('ServiceWorker not supported in this browser');
+            }
+        }
+        
+        // Register service worker with mobile compatibility
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', registerServiceWorker);
+        } else {
+            registerServiceWorker();
+        }
+        
+        // Also try on window load for mobile browsers
+        window.addEventListener('load', function() {
+            setTimeout(registerServiceWorker, 100);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Voice Journal</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        button { padding: 10px; margin: 5px; }
+        #results { background: #f5f5f5; padding: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Voice Journal Debug Tool</h1>
+    
+    <div class="debug-section">
+        <h3>Local Storage Check</h3>
+        <button onclick="checkLocalStorage()">Check Local Storage</button>
+        <div id="localStorageResults"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3>Add Sample Data</h3>
+        <button onclick="addSampleData()">Add Sample Conversations</button>
+        <div id="sampleDataResults"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3>Test Sidebar</h3>
+        <button onclick="testSidebar()">Test Sidebar Loading</button>
+        <div id="sidebarResults"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3>API Status</h3>
+        <button onclick="checkApiStatus()">Check API Status</button>
+        <div id="apiResults"></div>
+    </div>
+
+    <script>
+        function checkLocalStorage() {
+            const results = document.getElementById('localStorageResults');
+            const conversations = JSON.parse(localStorage.getItem('conversations') || '[]');
+            const apiKey = localStorage.getItem('openai_api_key');
+            
+            results.innerHTML = `
+                <h4>Local Storage Contents:</h4>
+                <p><strong>Conversations:</strong> ${conversations.length} entries</p>
+                <p><strong>API Key:</strong> ${apiKey ? 'Present (' + apiKey.length + ' chars)' : 'Not found'}</p>
+                <p><strong>Auto Listen:</strong> ${localStorage.getItem('autoListen') || 'Not set'}</p>
+                <details>
+                    <summary>Conversation Details</summary>
+                    <pre>${JSON.stringify(conversations, null, 2)}</pre>
+                </details>
+            `;
+        }
+        
+        function addSampleData() {
+            const results = document.getElementById('sampleDataResults');
+            
+            const sampleConversations = [
+                {
+                    id: 'sample-1',
+                    date: new Date().toISOString(),
+                    userMessage: "I had a really productive day today. I finished my project and felt accomplished.",
+                    aiResponse: "That's wonderful! It sounds like you're feeling proud of your achievements. What specifically about finishing the project made you feel most accomplished?",
+                    timestamp: new Date().toISOString()
+                },
+                {
+                    id: 'sample-2', 
+                    date: new Date(Date.now() - 86400000).toISOString(),
+                    userMessage: "I'm feeling a bit overwhelmed with all the tasks I have to do this week.",
+                    aiResponse: "It's completely normal to feel overwhelmed sometimes. Let's break this down together. What are the top 3 most important tasks you need to focus on?",
+                    timestamp: new Date(Date.now() - 86400000).toISOString()
+                },
+                {
+                    id: 'sample-3',
+                    date: new Date(Date.now() - 172800000).toISOString(),
+                    userMessage: "I had a great workout today and I'm feeling energized.",
+                    aiResponse: "That's fantastic! Exercise can really boost your mood and energy levels. What type of workout did you do?",
+                    timestamp: new Date(Date.now() - 172800000).toISOString()
+                }
+            ];
+            
+            localStorage.setItem('conversations', JSON.stringify(sampleConversations));
+            results.innerHTML = '<p>✅ Added 3 sample conversations to localStorage</p>';
+        }
+        
+        function testSidebar() {
+            const results = document.getElementById('sidebarResults');
+            
+            // Simulate the loadJournalEntries function
+            const conversations = JSON.parse(localStorage.getItem('conversations') || '[]');
+            const entriesContainer = document.createElement('div');
+            
+            if (conversations.length === 0) {
+                entriesContainer.innerHTML = '<p class="no-entries">No journal entries yet. Start a conversation!</p>';
+            } else {
+                conversations.forEach(conversation => {
+                    const entryDiv = document.createElement('div');
+                    entryDiv.className = 'journal-entry';
+                    entryDiv.innerHTML = `
+                        <div class="entry-header">
+                            <span class="entry-date">${new Date(conversation.date).toLocaleDateString()}</span>
+                            <span class="entry-time">${new Date(conversation.timestamp).toLocaleTimeString()}</span>
+                        </div>
+                        <div class="entry-preview">
+                            <strong>You:</strong> ${conversation.userMessage.substring(0, 100)}${conversation.userMessage.length > 100 ? '...' : ''}
+                        </div>
+                        <div class="entry-preview">
+                            <strong>AI:</strong> ${conversation.aiResponse.substring(0, 100)}${conversation.aiResponse.length > 100 ? '...' : ''}
+                        </div>
+                    `;
+                    entriesContainer.appendChild(entryDiv);
+                });
+            }
+            
+            results.innerHTML = `
+                <h4>Sidebar Test Results:</h4>
+                <p><strong>Found ${conversations.length} conversations</strong></p>
+                <div style="border: 1px solid #ddd; padding: 10px; max-height: 300px; overflow-y: auto;">
+                    ${entriesContainer.innerHTML}
+                </div>
+            `;
+        }
+        
+        function checkApiStatus() {
+            const results = document.getElementById('apiResults');
+            
+            // Check if my-keys.js is loaded
+            const hasMyKeys = typeof window.MY_KEYS !== 'undefined';
+            const hasConfig = typeof window.CONFIG !== 'undefined';
+            const apiKey = localStorage.getItem('openai_api_key');
+            
+            results.innerHTML = `
+                <h4>API Configuration Status:</h4>
+                <p><strong>MY_KEYS loaded:</strong> ${hasMyKeys ? 'Yes' : 'No'}</p>
+                <p><strong>CONFIG loaded:</strong> ${hasConfig ? 'Yes' : 'No'}</p>
+                <p><strong>LocalStorage API Key:</strong> ${apiKey ? 'Present' : 'Not found'}</p>
+                <p><strong>Window API Key:</strong> ${window.MY_KEYS?.OPENAI_API_KEY ? 'Present' : 'Not found'}</p>
+            `;
+        }
+        
+        // Run initial checks
+        window.onload = function() {
+            checkLocalStorage();
+            checkApiStatus();
+        };
+    </script>
+</body>
+</html>
+

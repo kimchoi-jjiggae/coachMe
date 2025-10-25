@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct Supabase Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .result { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background: #d1fae5; border-color: #10b981; }
+        .error { background: #fee2e2; border-color: #ef4444; }
+        .info { background: #d1ecf1; border-color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Direct Supabase Connection Test</h1>
+    
+    <div id="results"></div>
+    
+    <script type="module">
+        import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js@2';
+        
+        function showResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = message;
+            document.getElementById('results').appendChild(div);
+        }
+        
+        async function testSupabase() {
+            showResult('<h3>Testing Supabase Connection...</h3>', 'info');
+            
+            const supabaseUrl = 'https://mzalblqbedfwzltmsiqd.supabase.co';
+            const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16YWxibHFiZWRmd3psdG1zaXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0NTg5MzYsImV4cCI6MjA3NjAzNDkzNn0.X9_SmptOJCNzXGGiwXUSSd8Ql6EKUhQYOY6nVVdv6UQ';
+            
+            showResult(`<strong>Testing with:</strong><br>
+                URL: ${supabaseUrl}<br>
+                Key: ${supabaseKey.substring(0, 20)}...`, 'info');
+            
+            try {
+                // Test 1: Create Supabase client
+                showResult('Creating Supabase client...', 'info');
+                const supabase = createClient(supabaseUrl, supabaseKey);
+                showResult('✅ Supabase client created successfully', 'success');
+                
+                // Test 2: Test basic connection
+                showResult('Testing basic connection...', 'info');
+                const { data, error } = await supabase
+                    .from('conversations')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) {
+                    showResult(`❌ Connection failed: ${error.message}`, 'error');
+                    showResult(`Error details: ${JSON.stringify(error)}`, 'error');
+                } else {
+                    showResult('✅ Supabase connection successful!', 'success');
+                }
+                
+                // Test 3: Try to save a test entry
+                showResult('Testing save operation...', 'info');
+                const testEntry = {
+                    id: 'direct_test_' + Date.now(),
+                    user_id: 'test_user_' + Date.now(),
+                    user_message: 'Direct test from GitHub Pages',
+                    ai_response: '',
+                    date: new Date().toISOString(),
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                
+                const { data: saveData, error: saveError } = await supabase
+                    .from('conversations')
+                    .insert([testEntry])
+                    .select();
+                
+                if (saveError) {
+                    showResult(`❌ Save failed: ${saveError.message}`, 'error');
+                    showResult(`Save error details: ${JSON.stringify(saveError)}`, 'error');
+                } else {
+                    showResult(`✅ Test entry saved successfully! ID: ${testEntry.id}`, 'success');
+                }
+                
+                // Test 4: Try to read data
+                showResult('Testing read operation...', 'info');
+                const { data: readData, error: readError } = await supabase
+                    .from('conversations')
+                    .select('*')
+                    .limit(5);
+                
+                if (readError) {
+                    showResult(`❌ Read failed: ${readError.message}`, 'error');
+                } else {
+                    showResult(`✅ Read successful! Found ${readData.length} entries`, 'success');
+                    if (readData.length > 0) {
+                        showResult(`Sample entry: ${JSON.stringify(readData[0], null, 2)}`, 'info');
+                    }
+                }
+                
+            } catch (error) {
+                showResult(`❌ Unexpected error: ${error.message}`, 'error');
+                showResult(`Error details: ${JSON.stringify(error)}`, 'error');
+            }
+        }
+        
+        // Run test when page loads
+        window.onload = function() {
+            testSupabase();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Supabase Save</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; max-width: 800px; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { background: #d1fae5; border-color: #10b981; }
+        .error { background: #fee2e2; border-color: #ef4444; }
+        .info { background: #d1ecf1; border-color: #0c5460; }
+        button { padding: 10px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 3px; }
+        .code { background: #f5f5f5; padding: 10px; border-radius: 5px; font-family: monospace; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Supabase Save Functionality</h1>
+    
+    <div class="test">
+        <h3>Step 1: Test Direct API Call</h3>
+        <button onclick="testDirectAPI()">Test Direct API Call</button>
+        <div id="directResult"></div>
+    </div>
+    
+    <div class="test">
+        <h3>Step 2: Test with Supabase Client</h3>
+        <button onclick="testSupabaseClient()">Test with Supabase Client</button>
+        <div id="clientResult"></div>
+    </div>
+    
+    <div class="test">
+        <h3>Step 3: Check What's in Supabase</h3>
+        <button onclick="checkSupabaseData()">Check Supabase Data</button>
+        <div id="dataResult"></div>
+    </div>
+    
+    <div class="test">
+        <h3>Step 4: Test Journal App Save</h3>
+        <button onclick="testJournalApp()">Test Journal App Save</button>
+        <div id="journalResult"></div>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.skypack.dev/@supabase/supabase-js@2';
+        
+        const supabaseUrl = 'https://mzalblqbedfwzltmsiqd.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16YWxibHFiZWRmd3psdG1zaXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0NTg5MzYsImV4cCI6MjA3NjAzNDkzNn0.X9_SmptOJCNzXGGiwXUSSd8Ql6EKUhQYOY6nVVdv6UQ';
+        
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        
+        window.testDirectAPI = async function() {
+            const result = document.getElementById('directResult');
+            result.innerHTML = '<div class="info">Testing direct API call...</div>';
+            
+            try {
+                const testEntry = {
+                    id: 'direct_test_' + Date.now(),
+                    user_id: 'test_user_' + Date.now(),
+                    user_message: 'This is a direct API test entry.',
+                    ai_response: '',
+                    date: new Date().toISOString(),
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                
+                const response = await fetch(`${supabaseUrl}/rest/v1/conversations`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${supabaseKey}`,
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(testEntry)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    result.innerHTML = `<div class="success">✅ Direct API call successful! Created entry: ${data[0]?.id}</div>`;
+                } else {
+                    const errorText = await response.text();
+                    result.innerHTML = `<div class="error">❌ Direct API call failed: ${response.status} ${response.statusText}<br>${errorText}</div>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Direct API error: ${error.message}</div>`;
+            }
+        };
+        
+        window.testSupabaseClient = async function() {
+            const result = document.getElementById('clientResult');
+            result.innerHTML = '<div class="info">Testing Supabase client...</div>';
+            
+            try {
+                const testEntry = {
+                    id: 'client_test_' + Date.now(),
+                    user_id: 'test_user_' + Date.now(),
+                    user_message: 'This is a Supabase client test entry.',
+                    ai_response: '',
+                    date: new Date().toISOString(),
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                
+                const { data, error } = await supabase
+                    .from('conversations')
+                    .insert([testEntry]);
+                
+                if (error) {
+                    result.innerHTML = `<div class="error">❌ Supabase client failed: ${error.message}</div>`;
+                } else {
+                    result.innerHTML = `<div class="success">✅ Supabase client successful! Created entry: ${data[0]?.id}</div>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Supabase client error: ${error.message}</div>`;
+            }
+        };
+        
+        window.checkSupabaseData = async function() {
+            const result = document.getElementById('dataResult');
+            result.innerHTML = '<div class="info">Checking Supabase data...</div>';
+            
+            try {
+                const { data, error } = await supabase
+                    .from('conversations')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+                
+                if (error) {
+                    result.innerHTML = `<div class="error">❌ Query failed: ${error.message}</div>`;
+                } else {
+                    let html = `<div class="success">✅ Found ${data.length} entries in Supabase:</div>`;
+                    
+                    if (data.length === 0) {
+                        html += '<div class="info">No entries found in Supabase.</div>';
+                    } else {
+                        data.forEach((entry, index) => {
+                            html += `<div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 3px;">`;
+                            html += `<strong>Entry ${index + 1}:</strong><br>`;
+                            html += `ID: ${entry.id}<br>`;
+                            html += `User ID: ${entry.user_id}<br>`;
+                            html += `Message: ${entry.user_message.substring(0, 50)}...<br>`;
+                            html += `Date: ${new Date(entry.date).toLocaleString()}`;
+                            html += `</div>`;
+                        });
+                    }
+                    
+                    result.innerHTML = html;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Query error: ${error.message}</div>`;
+            }
+        };
+        
+        window.testJournalApp = async function() {
+            const result = document.getElementById('journalResult');
+            result.innerHTML = '<div class="info">Testing journal app save...</div>';
+            
+            try {
+                // Simulate what the journal app does
+                const testEntry = {
+                    id: 'journal_test_' + Date.now(),
+                    user_id: 'test_user_' + Date.now(),
+                    user_message: 'This is a journal app test entry.',
+                    ai_response: '',
+                    date: new Date().toISOString(),
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+                
+                // Test the exact same call the journal app makes
+                const { data, error } = await supabase
+                    .from('conversations')
+                    .insert([testEntry])
+                    .select();
+                
+                if (error) {
+                    result.innerHTML = `<div class="error">❌ Journal app save failed: ${error.message}</div>`;
+                } else {
+                    result.innerHTML = `<div class="success">✅ Journal app save successful! Entry: ${testEntry.id}</div>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error">❌ Journal app error: ${error.message}</div>`;
+            }
+        };
+    </script>
+</body>
+</html>
