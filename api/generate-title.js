@@ -1,30 +1,22 @@
-// Simple Node.js server for OpenAI API proxy
-// This keeps your API key secure on the server side
+// Server-side API endpoint for OpenAI title generation
+// This keeps your API key secure on the server
 
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || 'your_openai_api_key_here';
 
-const app = express();
-const PORT = process.env.PORT || 3003;
+export default async function handler(req, res) {
+  // Only allow POST requests
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.static('.'));
-
-// OpenAI API proxy endpoint
-app.post('/api/generate-title', async (req, res) => {
   const { content } = req.body;
 
   if (!content || typeof content !== 'string') {
     return res.status(400).json({ error: 'Content is required' });
   }
 
-  const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-
-  if (!OPENAI_API_KEY) {
-    return res.status(500).json({ error: 'OpenAI API key not configured on server' });
+  if (!OPENAI_API_KEY || OPENAI_API_KEY === 'your_openai_api_key_here') {
+    return res.status(500).json({ error: 'OpenAI API key not configured' });
   }
 
   try {
@@ -86,15 +78,4 @@ Title:`;
       details: error.message 
     });
   }
-});
-
-// Serve the main app
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-app.listen(PORT, () => {
-  console.log(`🚀 Voice Journal server running on http://localhost:${PORT}`);
-  console.log(`📝 OpenAI title generation available at /api/generate-title`);
-  console.log(`🔑 Make sure to set OPENAI_API_KEY environment variable`);
-});
+}

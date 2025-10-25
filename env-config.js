@@ -5,8 +5,8 @@
 // or update the values directly in this file for GitHub Pages
 
 const ENV_CONFIG = {
-    // OpenAI Configuration
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY || 'your_openai_api_key_here',
+    // OpenAI Configuration - Now handled server-side for security
+    // OPENAI_API_KEY: 'handled-server-side',
 
     // Supabase Configuration - Replace with your actual credentials
     SUPABASE_URL: process.env.SUPABASE_URL || 'https://mzalblqbedfwzltmsiqd.supabase.co',

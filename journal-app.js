@@ -685,63 +685,29 @@ class JournalApp {
         generateBtn.textContent = '📝 Generate Title';
     }
     
-    // Generate title using OpenAI API
+    // Generate title using server-side OpenAI API
     async generateTitleWithOpenAI(content) {
-        // Check if OpenAI API key is available
-        const apiKey = window.ENV_CONFIG?.OPENAI_API_KEY || window.MY_KEYS?.OPENAI_API_KEY;
-        
-        if (!apiKey || apiKey === 'your_openai_api_key_here') {
-            throw new Error('OpenAI API key not configured');
+        try {
+            const response = await fetch('/api/generate-title', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ content })
+            });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Server error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            return data.title;
+            
+        } catch (error) {
+            console.error('Server API error:', error);
+            throw new Error(`Title generation failed: ${error.message}`);
         }
-        
-        // Truncate content if too long (OpenAI has token limits)
-        const maxLength = 2000;
-        const truncatedContent = content.length > maxLength ? 
-            content.substring(0, maxLength) + '...' : content;
-        
-        const prompt = `Generate a concise, descriptive title (3-8 words) for this journal entry. The title should capture the main theme, emotion, or topic. Make it personal and meaningful.
-
-Journal Entry:
-"${truncatedContent}"
-
-Title:`;
-
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                model: 'gpt-3.5-turbo',
-                messages: [
-                    {
-                        role: 'system',
-                        content: 'You are a helpful assistant that creates meaningful, concise titles for personal journal entries. Focus on the main emotion, theme, or topic. Keep titles short (3-8 words) and personal.'
-                    },
-                    {
-                        role: 'user',
-                        content: prompt
-                    }
-                ],
-                max_tokens: 20,
-                temperature: 0.7
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error(`OpenAI API error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        const title = data.choices[0]?.message?.content?.trim();
-        
-        if (!title) {
-            throw new Error('No title generated from OpenAI');
-        }
-        
-        // Clean up the title
-        return title.replace(/^["']|["']$/g, '').trim();
     }
     
     // Create a smart title from content (fallback method)
