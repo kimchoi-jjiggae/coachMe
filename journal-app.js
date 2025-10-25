@@ -53,12 +53,23 @@ class JournalApp {
             this.recognition.continuous = true;
             this.recognition.interimResults = true;
             this.recognition.lang = 'en-US';
+            this.recognition.maxAlternatives = 1;
+            
+            // Extended recording settings
+            this.recordingStartTime = null;
+            this.maxRecordingDuration = 5 * 60 * 1000; // 5 minutes in milliseconds
+            this.autoRestartInterval = 25000; // Restart every 25 seconds to avoid browser timeouts
+            this.restartTimer = null;
             
             this.recognition.onstart = () => {
                 console.log('Voice recognition started');
                 this.isListening = true;
+                this.recordingStartTime = Date.now();
                 this.updateVoiceButton();
                 this.updateVoiceStatus('Listening...', 'listening');
+                
+                // Set up automatic restart to extend recording duration
+                this.scheduleAutoRestart();
             };
             
             this.recognition.onresult = (event) => {
@@ -85,13 +96,15 @@ class JournalApp {
             this.recognition.onerror = (event) => {
                 console.error('Voice recognition error:', event.error);
                 this.isListening = false;
+                this.clearRestartTimer();
                 this.updateVoiceButton();
                 this.updateVoiceStatus(`Error: ${event.error}`, 'error');
                 
-                // Restart if it was a temporary error
-                if (event.error === 'no-speech' || event.error === 'audio-capture') {
+                // Restart if it was a temporary error or timeout
+                if (event.error === 'no-speech' || event.error === 'audio-capture' || event.error === 'network') {
                     setTimeout(() => {
-                        if (this.autoListen) {
+                        if (this.autoListen && this.isRecordingActive()) {
+                            console.log('Auto-restarting voice recognition after error');
                             this.startVoiceInput();
                         }
                     }, 1000);
@@ -101,14 +114,18 @@ class JournalApp {
             this.recognition.onend = () => {
                 console.log('Voice recognition ended');
                 this.isListening = false;
+                this.clearRestartTimer();
                 this.updateVoiceButton();
-                this.updateVoiceStatus('Ready to listen', 'idle');
                 
-                // Restart if auto-listen is enabled
-                if (this.autoListen) {
+                // Check if we should continue recording
+                if (this.autoListen && this.isRecordingActive()) {
+                    this.updateVoiceStatus('Restarting...', 'listening');
                     setTimeout(() => {
+                        console.log('Auto-restarting voice recognition');
                         this.startVoiceInput();
                     }, 500);
+                } else {
+                    this.updateVoiceStatus('Ready to listen', 'idle');
                 }
             };
         } else {
@@ -200,6 +217,7 @@ class JournalApp {
         }
         
         try {
+            this.recordingStartTime = Date.now();
             this.recognition.start();
         } catch (error) {
             console.error('Failed to start voice recognition:', error);
@@ -209,6 +227,7 @@ class JournalApp {
 
     stopVoiceInput() {
         if (this.recognition && this.isListening) {
+            this.clearRestartTimer();
             this.recognition.stop();
         }
     }
@@ -560,6 +579,37 @@ class JournalApp {
         setTimeout(() => {
             messageEl.remove();
         }, 3000);
+    }
+    
+    // Extended recording helper methods
+    scheduleAutoRestart() {
+        this.clearRestartTimer();
+        this.restartTimer = setTimeout(() => {
+            if (this.isListening && this.isRecordingActive()) {
+                console.log('Auto-restarting to extend recording session');
+                this.stopVoiceInput();
+                // The onend event will handle the restart
+            }
+        }, this.autoRestartInterval);
+    }
+    
+    clearRestartTimer() {
+        if (this.restartTimer) {
+            clearTimeout(this.restartTimer);
+            this.restartTimer = null;
+        }
+    }
+    
+    isRecordingActive() {
+        if (!this.recordingStartTime) return false;
+        
+        const elapsed = Date.now() - this.recordingStartTime;
+        return elapsed < this.maxRecordingDuration;
+    }
+    
+    getRecordingDuration() {
+        if (!this.recordingStartTime) return 0;
+        return Math.floor((Date.now() - this.recordingStartTime) / 1000);
     }
 }
 
