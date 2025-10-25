@@ -184,9 +184,24 @@
                     return;
                 }
                 
+                // Try service worker first
+                if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                    try {
+                        navigator.serviceWorker.controller.postMessage({
+                            type: 'TEST_NOTIFICATION'
+                        });
+                        status.textContent = '✅ Test notification sent via service worker! Check your notification area.';
+                        status.className = 'status success';
+                        return;
+                    } catch (swError) {
+                        console.warn('Service worker notification failed, trying direct:', swError);
+                    }
+                }
+                
+                // Fallback to direct notification
                 const notification = new Notification('Voice Journal Test', {
                     body: 'This is a test notification! If you see this, notifications are working. 🎉',
-                    icon: '/icon-192x192.png',
+                    icon: './icons/icon-192x192.svg',
                     tag: 'test-notification'
                 });
                 

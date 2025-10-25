@@ -238,9 +238,27 @@ class JournalApp {
     
     // Test notification (for settings page)
     async testNotification() {
-        if (Notification.permission === 'granted') {
+        try {
+            if (Notification.permission !== 'granted') {
+                throw new Error('Notification permission not granted');
+            }
+            
+            // Try to use service worker for notification
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                try {
+                    navigator.serviceWorker.controller.postMessage({
+                        type: 'TEST_NOTIFICATION'
+                    });
+                    console.log('Test notification sent via service worker');
+                    return;
+                } catch (swError) {
+                    console.warn('Service worker notification failed, trying direct:', swError);
+                }
+            }
+            
+            // Fallback to direct notification
             const notification = new Notification('Voice Journal Test', {
-                body: 'This is a test notification from Voice Journal!',
+                body: 'This is a test notification! If you see this, notifications are working. 🎉',
                 icon: './icons/icon-192x192.svg',
                 tag: 'test-notification'
             });
@@ -249,8 +267,15 @@ class JournalApp {
                 window.focus();
                 notification.close();
             };
-        } else {
-            alert('Please enable notifications in your browser settings to receive journal reminders.');
+            
+            // Auto-close after 5 seconds
+            setTimeout(() => {
+                notification.close();
+            }, 5000);
+            
+        } catch (error) {
+            console.error('Test notification failed:', error);
+            alert('Failed to send test notification: ' + error.message);
         }
     }
 
