@@ -363,11 +363,11 @@ class JournalApp {
             this.entries.unshift(entry);
             localStorage.setItem('journalEntries', JSON.stringify(this.entries));
             
+            // Display entries immediately (don't reload from Supabase)
+            this.displayEntries();
+            
             // Clear form
             this.resetForm();
-            
-            // Reload entries
-            this.loadEntries();
             
             // Show success message
             this.showMessage('Entry saved successfully!', 'success');
