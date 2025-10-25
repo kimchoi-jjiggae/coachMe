@@ -27,17 +27,17 @@ jobs:
         # Create static version for GitHub Pages
         echo "Building static version for GitHub Pages..."
         
-        # Copy files to docs folder for GitHub Pages
-        mkdir -p docs
-        cp -r *.html *.js *.css *.json docs/
-        cp -r assets docs/ 2>/dev/null || true
+        # Backup original index.html
+        cp index.html index-original.html
         
-        # Use the GitHub Pages version
-        cp github-pages.html docs/index.html
+        # Use the GitHub Pages version as the main index
+        cp github-pages.html index.html
+        
+        echo "GitHub Pages version is now the main index.html"
         
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       if: github.ref == 'refs/heads/main'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./docs
+        publish_dir: ./
