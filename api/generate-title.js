@@ -1,9 +1,17 @@
-// Server-side API endpoint for OpenAI title generation
-// This keeps your API key secure on the server
-
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || 'your_openai_api_key_here';
+// Vercel serverless function for OpenAI title generation
+// This works with GitHub Pages by providing a CORS-enabled API endpoint
 
 export default async function handler(req, res) {
+  // Enable CORS for GitHub Pages
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -15,8 +23,14 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Content is required' });
   }
 
-  if (!OPENAI_API_KEY || OPENAI_API_KEY === 'your_openai_api_key_here') {
-    return res.status(500).json({ error: 'OpenAI API key not configured' });
+  // Get OpenAI API key from environment
+  const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+  if (!OPENAI_API_KEY) {
+    return res.status(500).json({ 
+      error: 'OpenAI API key not configured',
+      details: 'Please set OPENAI_API_KEY environment variable in Vercel'
+    });
   }
 
   try {
@@ -56,7 +70,8 @@ Title:`;
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`OpenAI API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
     }
 
     const data = await response.json();

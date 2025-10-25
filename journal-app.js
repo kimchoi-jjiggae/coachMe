@@ -685,10 +685,26 @@ class JournalApp {
         generateBtn.textContent = '📝 Generate Title';
     }
     
-    // Generate title using server-side OpenAI API
+    // Generate title using OpenAI API (supports both local server and Vercel)
     async generateTitleWithOpenAI(content) {
+        // Determine API endpoint based on environment
+        const isGitHubPages = window.location.hostname.includes('github.io');
+        const isLocalhost = window.location.hostname.includes('localhost');
+        
+        let apiUrl;
+        if (isGitHubPages) {
+            // Use Vercel serverless function for GitHub Pages
+            apiUrl = 'https://voice-journal-ai.vercel.app/api/generate-title';
+        } else if (isLocalhost) {
+            // Use local server for development
+            apiUrl = '/api/generate-title';
+        } else {
+            // Try local server first, fallback to Vercel
+            apiUrl = '/api/generate-title';
+        }
+        
         try {
-            const response = await fetch('/api/generate-title', {
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -698,14 +714,36 @@ class JournalApp {
             
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || `Server error: ${response.status}`);
+                throw new Error(errorData.error || `API error: ${response.status}`);
             }
             
             const data = await response.json();
             return data.title;
             
         } catch (error) {
-            console.error('Server API error:', error);
+            console.error('API error:', error);
+            
+            // If local server fails and we're not on GitHub Pages, try Vercel
+            if (!isGitHubPages && !isLocalhost && apiUrl === '/api/generate-title') {
+                console.log('Trying Vercel API as fallback...');
+                try {
+                    const vercelResponse = await fetch('https://voice-journal-ai.vercel.app/api/generate-title', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ content })
+                    });
+                    
+                    if (vercelResponse.ok) {
+                        const vercelData = await vercelResponse.json();
+                        return vercelData.title;
+                    }
+                } catch (vercelError) {
+                    console.log('Vercel API also failed:', vercelError);
+                }
+            }
+            
             throw new Error(`Title generation failed: ${error.message}`);
         }
     }
