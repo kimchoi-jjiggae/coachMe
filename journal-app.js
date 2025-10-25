@@ -21,10 +21,8 @@ class JournalApp {
         // Initialize microphone permissions
         await this.initializeMicrophonePermissions();
         
-        // Test permission if we think we have it (for PWA persistence)
-        if (this.microphonePermissionGranted) {
-            await this.testMicrophonePermission();
-        }
+        // For PWAs, proactively request permission on first load
+        await this.ensureMicrophonePermission();
         
         // Setup voice recognition
         this.setupVoiceRecognition();
@@ -765,11 +763,23 @@ class JournalApp {
         try {
             // Check localStorage first for PWA persistence
             const storedPermission = localStorage.getItem('microphonePermissionGranted');
-            if (storedPermission === 'true') {
-                this.microphonePermissionGranted = true;
-                console.log('Microphone permission restored from localStorage');
-                this.updateVoiceButton();
-                return;
+            const storedTimestamp = localStorage.getItem('microphonePermissionTimestamp');
+            
+            // Check if permission is recent (within last 7 days)
+            if (storedPermission === 'true' && storedTimestamp) {
+                const permissionAge = Date.now() - parseInt(storedTimestamp);
+                const sevenDays = 7 * 24 * 60 * 60 * 1000;
+                
+                if (permissionAge < sevenDays) {
+                    this.microphonePermissionGranted = true;
+                    console.log('Microphone permission restored from localStorage');
+                    this.updateVoiceButton();
+                    return;
+                } else {
+                    console.log('Microphone permission expired, clearing storage');
+                    localStorage.removeItem('microphonePermissionGranted');
+                    localStorage.removeItem('microphonePermissionTimestamp');
+                }
             }
             
             // Check if Permissions API is supported
@@ -777,8 +787,9 @@ class JournalApp {
                 const permission = await navigator.permissions.query({ name: 'microphone' });
                 this.microphonePermissionGranted = permission.state === 'granted';
                 
-                // Store permission state for PWA persistence
+                // Store permission state for PWA persistence with timestamp
                 localStorage.setItem('microphonePermissionGranted', this.microphonePermissionGranted.toString());
+                localStorage.setItem('microphonePermissionTimestamp', Date.now().toString());
                 
                 console.log('Microphone permission state:', permission.state);
                 
@@ -786,6 +797,7 @@ class JournalApp {
                 permission.addEventListener('change', () => {
                     this.microphonePermissionGranted = permission.state === 'granted';
                     localStorage.setItem('microphonePermissionGranted', this.microphonePermissionGranted.toString());
+                    localStorage.setItem('microphonePermissionTimestamp', Date.now().toString());
                     console.log('Microphone permission changed to:', permission.state);
                     this.updateVoiceButton();
                 });
@@ -807,8 +819,9 @@ class JournalApp {
             stream.getTracks().forEach(track => track.stop());
             
             this.microphonePermissionGranted = true;
-            // Store permission state for PWA persistence
+            // Store permission state for PWA persistence with timestamp
             localStorage.setItem('microphonePermissionGranted', 'true');
+            localStorage.setItem('microphonePermissionTimestamp', Date.now().toString());
             console.log('Microphone permission granted and stored');
             this.updateVoiceButton();
             
@@ -818,6 +831,7 @@ class JournalApp {
             this.microphonePermissionGranted = false;
             // Clear stored permission on denial
             localStorage.removeItem('microphonePermissionGranted');
+            localStorage.removeItem('microphonePermissionTimestamp');
             this.updateVoiceButton();
             return false;
         }
@@ -854,6 +868,47 @@ class JournalApp {
             this.updateVoiceButton();
             return false;
         }
+    }
+    
+    // Ensure microphone permission is granted (PWA-specific approach)
+    async ensureMicrophonePermission() {
+        // Check if we already have permission stored
+        if (this.microphonePermissionGranted) {
+            console.log('Microphone permission already granted');
+            return true;
+        }
+        
+        // Check if this is a PWA (more aggressive permission request)
+        const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                      window.navigator.standalone === true ||
+                      document.referrer.includes('android-app://');
+        
+        if (isPWA) {
+            console.log('PWA detected - requesting microphone permission proactively');
+            
+            // Show a user-friendly message
+            this.updateVoiceStatus('Setting up microphone access for voice journaling...', 'listening');
+            
+            // Request permission immediately
+            const granted = await this.requestMicrophonePermission();
+            
+            if (granted) {
+                this.updateVoiceStatus('Microphone access granted! You can now use voice input.', 'listening');
+                // Show success message
+                this.showMessage('🎤 Microphone access granted! Voice journaling is ready.', 'success');
+            } else {
+                this.updateVoiceStatus('Microphone access needed for voice input', 'error');
+                // Show permission button
+                const permissionBtn = document.getElementById('permissionBtn');
+                if (permissionBtn) {
+                    permissionBtn.style.display = 'inline-block';
+                }
+            }
+            
+            return granted;
+        }
+        
+        return false;
     }
 }
 
