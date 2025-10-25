@@ -515,13 +515,13 @@ class JournalApp {
     }
 
     displayEntries() {
-        const container = document.getElementById('entriesList');
+        const container = document.getElementById('entriesContainer');
         
         console.log('Displaying entries:', this.entries.length, 'entries');
         console.log('Container found:', !!container);
         
         if (!container) {
-            console.error('entriesList container not found!');
+            console.error('entriesContainer not found!');
             return;
         }
         
