@@ -1,0 +1,36 @@
+{
+  "name": "voice-journal-ios",
+  "version": "1.0.0",
+  "description": "Voice Journal iOS App",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'Building for iOS...'",
+    "ios": "npx cap run ios",
+    "ios:build": "npm run build && npx cap copy && npx cap open ios",
+    "ios:sync": "npx cap sync ios",
+    "ios:open": "npx cap open ios",
+    "ios:live": "npx cap run ios --livereload --external"
+  },
+  "dependencies": {
+    "@capacitor/core": "^5.6.0",
+    "@capacitor/ios": "^5.6.0",
+    "@capacitor/local-notifications": "^5.0.6",
+    "@capacitor/push-notifications": "^5.0.6",
+    "@capacitor/app": "^5.0.6",
+    "@capacitor/haptics": "^5.0.6",
+    "@capacitor/keyboard": "^5.0.6",
+    "@capacitor/status-bar": "^5.0.6"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^5.6.0"
+  },
+  "keywords": [
+    "voice",
+    "journal",
+    "ios",
+    "capacitor",
+    "notifications"
+  ],
+  "author": "Michelle Choi",
+  "license": "MIT"
+}
