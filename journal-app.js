@@ -509,7 +509,7 @@ class JournalApp {
     }
 
     displayEntries() {
-        const container = document.getElementById('entriesContainer');
+        const container = document.getElementById('entriesList');
         
         if (this.entries.length === 0) {
             container.innerHTML = '<div class="no-entries">No journal entries yet. Start writing!</div>';
