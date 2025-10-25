@@ -434,15 +434,20 @@ class JournalApp {
     }
 
     loadEntries() {
-        // Load from local storage
+        // Load from local storage first
         const stored = localStorage.getItem('journalEntries');
         this.entries = stored ? JSON.parse(stored) : [];
         
-        // Load from Supabase if enabled
+        console.log('Loaded local entries:', this.entries.length);
+        
+        // Always display local entries first
+        this.displayEntries();
+        
+        // Then try to load from Supabase if enabled (non-blocking)
         if (this.supabaseEnabled) {
-            this.loadFromSupabase();
-        } else {
-            this.displayEntries();
+            this.loadFromSupabase().catch(error => {
+                console.warn('Supabase load failed, using local entries only:', error);
+            });
         }
     }
 
@@ -510,6 +515,14 @@ class JournalApp {
 
     displayEntries() {
         const container = document.getElementById('entriesList');
+        
+        console.log('Displaying entries:', this.entries.length, 'entries');
+        console.log('Container found:', !!container);
+        
+        if (!container) {
+            console.error('entriesList container not found!');
+            return;
+        }
         
         if (this.entries.length === 0) {
             container.innerHTML = '<div class="no-entries">No journal entries yet. Start writing!</div>';
