@@ -86,7 +86,9 @@ class JournalApp {
                 }
                 
                 if (finalTranscript) {
-                    this.appendToEntry(finalTranscript);
+                    // Process the transcript to add punctuation
+                    const processedTranscript = this.addPunctuation(finalTranscript);
+                    this.appendToEntry(processedTranscript);
                 }
                 
                 // Show interim results
@@ -138,6 +140,10 @@ class JournalApp {
         // Voice button
         document.getElementById('voiceBtn').addEventListener('click', () => {
             this.toggleVoiceInput();
+        });
+        
+        document.getElementById('generateTitleBtn').addEventListener('click', () => {
+            this.generateTitle();
         });
         
         // Save button
@@ -610,6 +616,117 @@ class JournalApp {
     getRecordingDuration() {
         if (!this.recordingStartTime) return 0;
         return Math.floor((Date.now() - this.recordingStartTime) / 1000);
+    }
+    
+    // Generate title from entry content
+    generateTitle() {
+        const content = document.getElementById('entryContent').value.trim();
+        const titleField = document.getElementById('entryTitle');
+        
+        if (!content) {
+            this.showMessage('Please write some content first before generating a title.', 'error');
+            return;
+        }
+        
+        // Disable button while generating
+        const generateBtn = document.getElementById('generateTitleBtn');
+        generateBtn.disabled = true;
+        generateBtn.textContent = '🔄 Generating...';
+        
+        // Generate a smart title based on content
+        const title = this.createSmartTitle(content);
+        
+        // Update the title field
+        titleField.value = title;
+        
+        // Re-enable button
+        generateBtn.disabled = false;
+        generateBtn.textContent = '📝 Generate Title';
+        
+        this.showMessage('Title generated successfully!', 'success');
+    }
+    
+    // Create a smart title from content
+    createSmartTitle(content) {
+        // Clean and process the content
+        const cleanContent = content.replace(/\s+/g, ' ').trim();
+        
+        // Extract key phrases and topics
+        const sentences = cleanContent.split(/[.!?]+/).filter(s => s.trim().length > 0);
+        const firstSentence = sentences[0] || '';
+        
+        // Common journal patterns to identify
+        const patterns = [
+            { regex: /today/i, prefix: 'Today: ' },
+            { regex: /yesterday/i, prefix: 'Yesterday: ' },
+            { regex: /this week/i, prefix: 'This Week: ' },
+            { regex: /feeling|feel/i, prefix: 'Feeling: ' },
+            { regex: /thinking about|thoughts/i, prefix: 'Thoughts: ' },
+            { regex: /work|job|career/i, prefix: 'Work: ' },
+            { regex: /family|kids|children/i, prefix: 'Family: ' },
+            { regex: /relationship|partner|love/i, prefix: 'Relationships: ' },
+            { regex: /goal|plan|future/i, prefix: 'Goals: ' },
+            { regex: /problem|issue|challenge/i, prefix: 'Challenges: ' },
+            { regex: /grateful|thankful|appreciate/i, prefix: 'Gratitude: ' },
+            { regex: /dream|nightmare/i, prefix: 'Dreams: ' },
+            { regex: /travel|trip|vacation/i, prefix: 'Travel: ' },
+            { regex: /health|exercise|fitness/i, prefix: 'Health: ' },
+            { regex: /learning|study|education/i, prefix: 'Learning: ' }
+        ];
+        
+        // Find matching pattern
+        for (const pattern of patterns) {
+            if (pattern.regex.test(cleanContent)) {
+                const title = this.extractTitleFromSentence(firstSentence, pattern.prefix);
+                return title;
+            }
+        }
+        
+        // Default: create title from first sentence
+        return this.extractTitleFromSentence(firstSentence, 'Journal: ');
+    }
+    
+    // Extract and format title from sentence
+    extractTitleFromSentence(sentence, prefix) {
+        // Clean the sentence
+        let title = sentence.trim();
+        
+        // Remove common filler words at the start
+        title = title.replace(/^(so|well|um|uh|you know|i mean|like)\s+/i, '');
+        
+        // Capitalize first letter
+        title = title.charAt(0).toUpperCase() + title.slice(1);
+        
+        // Limit length (max 50 characters)
+        if (title.length > 50) {
+            title = title.substring(0, 47) + '...';
+        }
+        
+        // Add prefix if provided
+        if (prefix) {
+            return prefix + title;
+        }
+        
+        return title;
+    }
+    
+    // Add punctuation to voice transcript
+    addPunctuation(text) {
+        if (!text || text.trim().length === 0) return text;
+        
+        // Add period at the end if missing
+        let processed = text.trim();
+        if (!processed.match(/[.!?]$/)) {
+            processed += '.';
+        }
+        
+        // Add commas before common conjunctions
+        processed = processed.replace(/\s+(and|but|or|so|yet|for|nor)\s+/gi, ', $1 ');
+        
+        // Add comma before "and" in lists (simple heuristic)
+        processed = processed.replace(/(\w+)\s+and\s+(\w+)/g, '$1, and $2');
+        
+        return processed;
     }
 }
 

@@ -200,6 +200,29 @@
             transform: translateY(-1px);
         }
         
+        .btn-generate-title {
+            background: #8b5cf6;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-generate-title:hover {
+            background: #7c3aed;
+            transform: translateY(-1px);
+        }
+        
+        .btn-generate-title:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
         .entries-list {
             margin-top: 2rem;
         }
@@ -578,6 +601,7 @@
             
             <div class="form-actions">
                 <button id="clearBtn" class="btn-clear">Clear</button>
+                <button id="generateTitleBtn" class="btn-generate-title">📝 Generate Title</button>
                 <button id="saveBtn" class="btn-save">Save Entry</button>
             </div>
         </div>
