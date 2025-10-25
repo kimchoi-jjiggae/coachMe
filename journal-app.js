@@ -398,13 +398,13 @@ class JournalApp {
             console.log('Supabase URL:', this.supabaseUrl);
             console.log('Supabase Key:', this.supabaseKey ? 'Present' : 'Missing');
             
-            // Save as a conversation in Supabase using insert instead of upsert
+            // Save as a conversation in Supabase using upsert to handle both new entries and edits
             const userId = await this.getUserId();
             console.log('Saving with user_id:', userId);
             
             const { data, error } = await this.supabase
                 .from('conversations')
-                .insert({
+                .upsert({
                     id: entry.id,
                     user_id: userId,
                     user_message: entry.content,
@@ -412,6 +412,8 @@ class JournalApp {
                     date: entry.date,
                     created_at: entry.created_at,
                     updated_at: entry.updated_at
+                }, {
+                    onConflict: 'id'
                 })
                 .select();
             
