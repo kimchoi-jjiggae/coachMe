@@ -9,12 +9,12 @@ const ENV_CONFIG = {
     // OPENAI_API_KEY: 'handled-server-side',
 
     // Supabase Configuration - Replace with your actual credentials
-    SUPABASE_URL: process.env.SUPABASE_URL || 'https://mzalblqbedfwzltmsiqd.supabase.co',
-    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16YWxibHFiZWRmd3psdG1zaXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0NTg5MzYsImV4cCI6MjA3NjAzNDkzNn0.X9_SmptOJCNzXGGiwXUSSd8Ql6EKUhQYOY6nVVdv6UQ',
+    SUPABASE_URL: (typeof process !== 'undefined' && process.env.SUPABASE_URL) || 'https://mzalblqbedfwzltmsiqd.supabase.co',
+    SUPABASE_ANON_KEY: (typeof process !== 'undefined' && process.env.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16YWxibHFiZWRmd3psdG1zaXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0NTg5MzYsImV4cCI6MjA3NjAzNDkzNn0.X9_SmptOJCNzXGGiwXUSSd8Ql6EKUhQYOY6nVVdv6UQ',
 
     // App Settings
-    AUTO_START_VOICE: process.env.AUTO_START_VOICE === 'true' || false,
-    AUTO_SAVE_CONVERSATIONS: process.env.AUTO_SAVE_CONVERSATIONS !== 'false'
+    AUTO_START_VOICE: (typeof process !== 'undefined' && process.env.AUTO_START_VOICE === 'true') || false,
+    AUTO_SAVE_CONVERSATIONS: (typeof process !== 'undefined' && process.env.AUTO_SAVE_CONVERSATIONS !== 'false') || true
 };
 
 // Make it available globally
