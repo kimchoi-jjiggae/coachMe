@@ -36,8 +36,13 @@ class JournalApp {
         // Load existing entries
         this.loadEntries();
         
-        // Set initial random prompt
+        // Set initial random prompt (with fallback)
         this.setRandomPrompt();
+        
+        // Fallback: try again after a short delay in case DOM wasn't ready
+        setTimeout(() => {
+            this.setRandomPrompt();
+        }, 100);
         
         console.log('Journal App initialized successfully');
     }
@@ -81,9 +86,16 @@ class JournalApp {
     
     setRandomPrompt() {
         const textarea = document.getElementById('entryContent');
+        console.log('Setting random prompt...');
+        console.log('Textarea found:', !!textarea);
+        console.log('Journal prompts available:', !!this.journalPrompts);
+        
         if (textarea && this.journalPrompts) {
             const randomPrompt = this.journalPrompts[Math.floor(Math.random() * this.journalPrompts.length)];
             textarea.placeholder = randomPrompt;
+            console.log('Set prompt:', randomPrompt);
+        } else {
+            console.log('Could not set prompt - textarea or prompts not available');
         }
     }
 
