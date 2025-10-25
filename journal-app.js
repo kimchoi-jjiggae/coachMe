@@ -694,7 +694,7 @@ class JournalApp {
         let apiUrl;
         if (isGitHubPages) {
             // Use Vercel serverless function for GitHub Pages
-            apiUrl = 'https://voice-journal-ai.vercel.app/api/generate-title';
+            apiUrl = 'https://coach-me-1wtt.vercel.app/api/generate-title';
         } else if (isLocalhost) {
             // Use local server for development
             apiUrl = '/api/generate-title';
@@ -727,7 +727,7 @@ class JournalApp {
             if (!isGitHubPages && !isLocalhost && apiUrl === '/api/generate-title') {
                 console.log('Trying Vercel API as fallback...');
                 try {
-                    const vercelResponse = await fetch('https://voice-journal-ai.vercel.app/api/generate-title', {
+                    const vercelResponse = await fetch('https://coach-me-1wtt.vercel.app/api/generate-title', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
