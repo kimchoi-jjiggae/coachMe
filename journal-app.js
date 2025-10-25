@@ -106,7 +106,7 @@ class JournalApp {
     async initializeNotifications() {
         // Check if notifications are supported
         if (!('Notification' in window)) {
-            console.log('This browser does not support notifications');
+            console.log('This browser does not support notifications (iOS Safari limitation)');
             return;
         }
         
@@ -239,6 +239,11 @@ class JournalApp {
     // Test notification (for settings page)
     async testNotification() {
         try {
+            // Check if Notification API is available
+            if (!('Notification' in window)) {
+                throw new Error('Notifications not supported on this device. iOS Safari has limited notification support.');
+            }
+            
             if (Notification.permission !== 'granted') {
                 throw new Error('Notification permission not granted');
             }

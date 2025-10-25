@@ -106,9 +106,11 @@
             
             <div class="step">
                 <strong>iPhone/iPad (Safari):</strong><br>
-                1. Tap "Request Permission" above<br>
-                2. When prompted, tap "Allow"<br>
-                3. If no prompt appears, go to Settings → Safari → Advanced → Website Data
+                ⚠️ <strong>iOS Safari has limited notification support!</strong><br>
+                1. Try "Request Permission" above<br>
+                2. If you get "not supported" error, this is normal for iOS Safari<br>
+                3. For best results, use Chrome or Firefox on iOS<br>
+                4. Or try the PWA version: Add to Home Screen first
             </div>
             
             <div class="step">
@@ -146,8 +148,31 @@
             const testBtn = document.getElementById('testNotification');
             
             try {
+                // Check if Notification API is available
+                if (typeof Notification === 'undefined') {
+                    status.textContent = '❌ Notifications not supported on this device/browser. iOS Safari has limited notification support.';
+                    status.className = 'status error';
+                    testBtn.disabled = true;
+                    return;
+                }
+                
                 status.textContent = 'Requesting notification permission...';
                 status.className = 'status info';
+                
+                // Check current permission first
+                if (Notification.permission === 'granted') {
+                    status.textContent = '✅ Permission already granted! You can test notifications.';
+                    status.className = 'status success';
+                    testBtn.disabled = false;
+                    return;
+                }
+                
+                if (Notification.permission === 'denied') {
+                    status.textContent = '❌ Permission denied. Please enable notifications in your browser settings.';
+                    status.className = 'status error';
+                    testBtn.disabled = true;
+                    return;
+                }
                 
                 const permission = await Notification.requestPermission();
                 
@@ -178,6 +203,13 @@
             const status = document.getElementById('status');
             
             try {
+                // Check if Notification API is available
+                if (typeof Notification === 'undefined') {
+                    status.textContent = '❌ Notifications not supported on this device. iOS Safari has limited notification support.';
+                    status.className = 'status error';
+                    return;
+                }
+                
                 if (Notification.permission !== 'granted') {
                     status.textContent = '❌ Permission not granted. Please request permission first.';
                     status.className = 'status error';
@@ -223,6 +255,13 @@
         function checkPermission() {
             const permissionInfo = document.getElementById('permissionInfo');
             const testBtn = document.getElementById('testNotification');
+            
+            // Check if Notification API is available
+            if (typeof Notification === 'undefined') {
+                permissionInfo.textContent = '❌ Notifications: NOT SUPPORTED (iOS Safari limitation)';
+                testBtn.disabled = true;
+                return;
+            }
             
             const permission = Notification.permission;
             let statusText = '';
