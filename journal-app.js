@@ -21,6 +21,11 @@ class JournalApp {
         // Initialize microphone permissions
         await this.initializeMicrophonePermissions();
         
+        // Test permission if we think we have it (for PWA persistence)
+        if (this.microphonePermissionGranted) {
+            await this.testMicrophonePermission();
+        }
+        
         // Setup voice recognition
         this.setupVoiceRecognition();
         
@@ -758,16 +763,29 @@ class JournalApp {
     // Initialize microphone permissions
     async initializeMicrophonePermissions() {
         try {
+            // Check localStorage first for PWA persistence
+            const storedPermission = localStorage.getItem('microphonePermissionGranted');
+            if (storedPermission === 'true') {
+                this.microphonePermissionGranted = true;
+                console.log('Microphone permission restored from localStorage');
+                this.updateVoiceButton();
+                return;
+            }
+            
             // Check if Permissions API is supported
             if ('permissions' in navigator) {
                 const permission = await navigator.permissions.query({ name: 'microphone' });
                 this.microphonePermissionGranted = permission.state === 'granted';
+                
+                // Store permission state for PWA persistence
+                localStorage.setItem('microphonePermissionGranted', this.microphonePermissionGranted.toString());
                 
                 console.log('Microphone permission state:', permission.state);
                 
                 // Listen for permission changes
                 permission.addEventListener('change', () => {
                     this.microphonePermissionGranted = permission.state === 'granted';
+                    localStorage.setItem('microphonePermissionGranted', this.microphonePermissionGranted.toString());
                     console.log('Microphone permission changed to:', permission.state);
                     this.updateVoiceButton();
                 });
@@ -789,13 +807,50 @@ class JournalApp {
             stream.getTracks().forEach(track => track.stop());
             
             this.microphonePermissionGranted = true;
-            console.log('Microphone permission granted');
+            // Store permission state for PWA persistence
+            localStorage.setItem('microphonePermissionGranted', 'true');
+            console.log('Microphone permission granted and stored');
             this.updateVoiceButton();
             
             return true;
         } catch (error) {
             console.log('Microphone permission denied:', error);
             this.microphonePermissionGranted = false;
+            // Clear stored permission on denial
+            localStorage.removeItem('microphonePermissionGranted');
+            this.updateVoiceButton();
+            return false;
+        }
+    }
+    
+    // Test if microphone permission is still valid (for PWA persistence)
+    async testMicrophonePermission() {
+        try {
+            // First check if we can enumerate devices (silent check)
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const hasAudioInput = devices.some(device => device.kind === 'audioinput');
+            
+            if (!hasAudioInput) {
+                console.log('No audio input devices found');
+                this.microphonePermissionGranted = false;
+                localStorage.removeItem('microphonePermissionGranted');
+                this.updateVoiceButton();
+                return false;
+            }
+            
+            // Try to get microphone access to verify permission is still valid
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            
+            // Stop the stream immediately
+            stream.getTracks().forEach(track => track.stop());
+            
+            console.log('Microphone permission test successful');
+            return true;
+        } catch (error) {
+            console.log('Microphone permission test failed:', error);
+            // Permission was revoked, update state
+            this.microphonePermissionGranted = false;
+            localStorage.removeItem('microphonePermissionGranted');
             this.updateVoiceButton();
             return false;
         }
