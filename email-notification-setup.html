@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Notification Setup - Voice Journal</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        
+        .option {
+            background: #f3f4f6;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #6366f1;
+        }
+        
+        .option h3 {
+            margin-top: 0;
+            color: #1f2937;
+        }
+        
+        .pros {
+            color: #059669;
+            font-weight: 500;
+        }
+        
+        .cons {
+            color: #dc2626;
+            font-weight: 500;
+        }
+        
+        .setup-steps {
+            background: #dbeafe;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        .step {
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background: white;
+            border-radius: 6px;
+        }
+        
+        button {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        button:hover {
+            background: #4f46e5;
+        }
+        
+        .warning {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📧 Daily Notification Setup</h1>
+        
+        <div class="warning">
+            <strong>⚠️ SMS Notifications:</strong> Sending SMS from web apps requires paid services like Twilio. Here are better alternatives:
+        </div>
+        
+        <div class="option">
+            <h3>📧 Option 1: Email Notifications (Recommended)</h3>
+            <p><strong>How it works:</strong> Send daily email reminders to your phone. Most phones show email notifications just like SMS.</p>
+            <div class="pros">✅ Free • ✅ Easy setup • ✅ Works on all devices • ✅ Reliable</div>
+            <div class="setup-steps">
+                <strong>Setup Steps:</strong>
+                <div class="step">1. Enter your email address below</div>
+                <div class="step">2. Choose your reminder time</div>
+                <div class="step">3. Customize your message</div>
+                <div class="step">4. Enable email notifications on your phone</div>
+            </div>
+        </div>
+        
+        <div class="option">
+            <h3>📅 Option 2: Calendar Integration</h3>
+            <p><strong>How it works:</strong> Create daily calendar events that your phone will remind you about.</p>
+            <div class="pros">✅ Free • ✅ Native phone integration • ✅ No external services</div>
+            <div class="cons">❌ Requires manual setup each time</div>
+        </div>
+        
+        <div class="option">
+            <h3>📱 Option 3: Twilio SMS (Advanced)</h3>
+            <p><strong>How it works:</strong> Use Twilio service to send real SMS messages.</p>
+            <div class="pros">✅ Real SMS • ✅ Professional</div>
+            <div class="cons">❌ Requires paid service • ❌ Complex setup • ❌ Monthly costs</div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 2rem;">
+            <button onclick="setupEmailNotifications()">📧 Setup Email Notifications</button>
+            <button onclick="setupCalendarEvents()">📅 Setup Calendar Events</button>
+            <button onclick="showTwilioGuide()">📱 Twilio SMS Guide</button>
+        </div>
+        
+        <div id="setupForm" style="display: none; margin-top: 2rem; padding: 1rem; background: #f9fafb; border-radius: 8px;">
+            <h3>Email Notification Setup</h3>
+            <form id="emailForm">
+                <div style="margin: 1rem 0;">
+                    <label for="email">Your Email Address:</label><br>
+                    <input type="email" id="email" required style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px;">
+                </div>
+                <div style="margin: 1rem 0;">
+                    <label for="reminderTime">Reminder Time:</label><br>
+                    <input type="time" id="reminderTime" value="20:00" style="padding: 0.5rem; margin-top: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px;">
+                </div>
+                <div style="margin: 1rem 0;">
+                    <label for="message">Custom Message:</label><br>
+                    <textarea id="message" style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; border: 1px solid #d1d5db; border-radius: 4px; height: 80px;">Time for your daily journal reflection! 📝</textarea>
+                </div>
+                <button type="submit">Save Email Settings</button>
+            </form>
+        </div>
+        
+        <div id="twilioGuide" style="display: none; margin-top: 2rem; padding: 1rem; background: #f9fafb; border-radius: 8px;">
+            <h3>Twilio SMS Setup Guide</h3>
+            <div class="step">1. Go to <a href="https://twilio.com" target="_blank">twilio.com</a> and sign up</div>
+            <div class="step">2. Get a phone number and API credentials</div>
+            <div class="step">3. Add your phone number: +13107757048</div>
+            <div class="step">4. Configure daily SMS sending</div>
+            <div class="step">5. Costs: ~$0.0075 per SMS (about $0.23/month)</div>
+            <p><strong>Note:</strong> This requires server-side implementation and monthly costs.</p>
+        </div>
+    </div>
+    
+    <script>
+        function setupEmailNotifications() {
+            document.getElementById('setupForm').style.display = 'block';
+            document.getElementById('twilioGuide').style.display = 'none';
+        }
+        
+        function setupCalendarEvents() {
+            alert('Calendar integration coming soon! For now, you can manually add daily events to your phone calendar.');
+        }
+        
+        function showTwilioGuide() {
+            document.getElementById('twilioGuide').style.display = 'block';
+            document.getElementById('setupForm').style.display = 'none';
+        }
+        
+        document.getElementById('emailForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const time = document.getElementById('reminderTime').value;
+            const message = document.getElementById('message').value;
+            
+            // Save to localStorage for now
+            localStorage.setItem('emailNotificationSettings', JSON.stringify({
+                email: email,
+                time: time,
+                message: message,
+                enabled: true
+            }));
+            
+            alert('Email notification settings saved! Note: This is a demo - actual email sending requires server setup.');
+        });
+    </script>
+</body>
+</html>

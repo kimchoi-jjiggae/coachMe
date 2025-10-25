@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar Reminder Setup - Voice Journal</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        
+        .success {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .info {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border: 1px solid #93c5fd;
+        }
+        
+        .step {
+            background: #f3f4f6;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #6366f1;
+        }
+        
+        .step h3 {
+            margin-top: 0;
+            color: #1f2937;
+        }
+        
+        .device-specific {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        button {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        button:hover {
+            background: #4f46e5;
+        }
+        
+        .form-group {
+            margin: 1rem 0;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        .calendar-link {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 0.5rem;
+        }
+        
+        .calendar-link:hover {
+            background: #059669;
+        }
+        
+        .copy-text {
+            background: #f3f4f6;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            margin: 0.5rem 0;
+            border: 1px solid #d1d5db;
+        }
+        
+        .copy-btn {
+            background: #6b7280;
+            font-size: 0.8rem;
+            padding: 0.5rem 1rem;
+        }
+        
+        .copy-btn:hover {
+            background: #4b5563;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📅 Calendar Reminder Setup</h1>
+        
+        <div class="info">
+            <strong>📱 How it works:</strong> Create daily calendar events that your phone will remind you about. This uses your phone's built-in calendar system, so it's free and reliable!
+        </div>
+        
+        <div class="form-group">
+            <label for="reminderTime">Daily Reminder Time:</label>
+            <input type="time" id="reminderTime" value="20:00">
+        </div>
+        
+        <div class="form-group">
+            <label for="reminderMessage">Reminder Message:</label>
+            <input type="text" id="reminderMessage" value="Time for your daily journal reflection! 📝" placeholder="Enter your custom reminder message">
+        </div>
+        
+        <div class="form-group">
+            <label for="reminderDuration">Reminder Duration (minutes):</label>
+            <select id="reminderDuration">
+                <option value="15">15 minutes</option>
+                <option value="30" selected>30 minutes</option>
+                <option value="60">1 hour</option>
+                <option value="120">2 hours</option>
+            </select>
+        </div>
+        
+        <button onclick="generateCalendarEvent()">📅 Generate Calendar Event</button>
+        <button onclick="showManualInstructions()">📱 Show Manual Setup</button>
+        
+        <div id="calendarEvent" style="display: none;">
+            <div class="success">
+                <h3>✅ Calendar Event Generated!</h3>
+                <p>Choose your preferred method below:</p>
+            </div>
+            
+            <div class="step">
+                <h3>📱 Method 1: Direct Calendar Link (Easiest)</h3>
+                <p>Click the link below to add the event to your calendar:</p>
+                <a id="calendarLink" href="#" class="calendar-link" target="_blank">📅 Add to Calendar</a>
+            </div>
+            
+            <div class="step">
+                <h3>📋 Method 2: Copy Event Details</h3>
+                <p>Copy the event details below and manually add them to your calendar:</p>
+                <div class="copy-text" id="eventDetails">
+                    <!-- Event details will be inserted here -->
+                </div>
+                <button onclick="copyEventDetails()" class="copy-btn">📋 Copy Details</button>
+            </div>
+            
+            <div class="step">
+                <h3>📱 Method 3: Manual Setup</h3>
+                <p>If the above methods don't work, follow the manual setup instructions below.</p>
+                <button onclick="showManualInstructions()" class="copy-btn">📱 Show Manual Instructions</button>
+            </div>
+        </div>
+        
+        <div id="manualInstructions" style="display: none;">
+            <div class="device-specific">
+                <h3>📱 Manual Setup Instructions</h3>
+                
+                <div class="step">
+                    <h3>iPhone/iPad (Calendar App)</h3>
+                    <ol>
+                        <li>Open the <strong>Calendar</strong> app</li>
+                        <li>Tap the <strong>+</strong> button to create a new event</li>
+                        <li>Set the <strong>Title:</strong> <span id="manualTitle"></span></li>
+                        <li>Set the <strong>Time:</strong> <span id="manualTime"></span></li>
+                        <li>Set <strong>Repeat:</strong> Every Day</li>
+                        <li>Set <strong>Alert:</strong> <span id="manualAlert"></span></li>
+                        <li>Tap <strong>Add</strong> to save</li>
+                    </ol>
+                </div>
+                
+                <div class="step">
+                    <h3>Android (Google Calendar)</h3>
+                    <ol>
+                        <li>Open <strong>Google Calendar</strong></li>
+                        <li>Tap the <strong>+</strong> button</li>
+                        <li>Set the <strong>Event title:</strong> <span id="manualTitleAndroid"></span></li>
+                        <li>Set the <strong>Date & time:</strong> <span id="manualTimeAndroid"></span></li>
+                        <li>Set <strong>Repeat:</strong> Daily</li>
+                        <li>Set <strong>Notifications:</strong> <span id="manualAlertAndroid"></span></li>
+                        <li>Tap <strong>Save</strong></li>
+                    </ol>
+                </div>
+                
+                <div class="step">
+                    <h3>Mac (Calendar App)</h3>
+                    <ol>
+                        <li>Open the <strong>Calendar</strong> app</li>
+                        <li>Double-click on the date</li>
+                        <li>Set the <strong>Title:</strong> <span id="manualTitleMac"></span></li>
+                        <li>Set the <strong>Time:</strong> <span id="manualTimeMac"></span></li>
+                        <li>Set <strong>Repeat:</strong> Every Day</li>
+                        <li>Set <strong>Alert:</strong> <span id="manualAlertMac"></span></li>
+                        <li>Press <strong>Enter</strong> to save</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info">
+            <h3>💡 Pro Tips:</h3>
+            <ul>
+                <li><strong>Set multiple reminders:</strong> 15 minutes before, 5 minutes before, and at the time</li>
+                <li><strong>Use a consistent time:</strong> Pick a time when you're usually free</li>
+                <li><strong>Make it visible:</strong> Use emojis in the title to make it stand out</li>
+                <li><strong>Test it:</strong> Set a test reminder for 2 minutes from now to make sure it works</li>
+            </ul>
+        </div>
+    </div>
+    
+    <script>
+        function generateCalendarEvent() {
+            const time = document.getElementById('reminderTime').value;
+            const message = document.getElementById('reminderMessage').value;
+            const duration = document.getElementById('reminderDuration').value;
+            
+            // Parse time
+            const [hours, minutes] = time.split(':').map(Number);
+            const now = new Date();
+            const eventDate = new Date();
+            eventDate.setHours(hours, minutes, 0, 0);
+            
+            // If time has passed today, set for tomorrow
+            if (eventDate <= now) {
+                eventDate.setDate(eventDate.getDate() + 1);
+            }
+            
+            // Format date for calendar
+            const year = eventDate.getFullYear();
+            const month = String(eventDate.getMonth() + 1).padStart(2, '0');
+            const day = String(eventDate.getDate()).padStart(2, '0');
+            const startTime = `${year}${month}${day}T${time.replace(':', '')}00`;
+            const endTime = `${year}${month}${day}T${String(hours).padStart(2, '0')}${String(minutes + parseInt(duration)).padStart(2, '0')}00`;
+            
+            // Generate calendar links
+            const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(message)}&dates=${startTime}/${endTime}&recur=RRULE:FREQ=DAILY&details=${encodeURIComponent('Daily journal reminder - Time to reflect and write!')}`;
+            
+            const outlookUrl = `https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(message)}&startdt=${startTime}&enddt=${endTime}&recurrence=DAILY&body=${encodeURIComponent('Daily journal reminder - Time to reflect and write!')}`;
+            
+            // Update calendar link
+            document.getElementById('calendarLink').href = googleCalendarUrl;
+            
+            // Generate event details
+            const eventDetails = `Title: ${message}
+Time: ${time} (${duration} minutes)
+Repeat: Daily
+Alert: ${duration} minutes before
+Description: Daily journal reminder - Time to reflect and write!
+
+Google Calendar Link:
+${googleCalendarUrl}
+
+Outlook Link:
+${outlookUrl}`;
+            
+            document.getElementById('eventDetails').textContent = eventDetails;
+            
+            // Update manual instructions
+            document.getElementById('manualTitle').textContent = message;
+            document.getElementById('manualTime').textContent = time;
+            document.getElementById('manualAlert').textContent = `${duration} minutes before`;
+            
+            document.getElementById('manualTitleAndroid').textContent = message;
+            document.getElementById('manualTimeAndroid').textContent = time;
+            document.getElementById('manualAlertAndroid').textContent = `${duration} minutes before`;
+            
+            document.getElementById('manualTitleMac').textContent = message;
+            document.getElementById('manualTimeMac').textContent = time;
+            document.getElementById('manualAlertMac').textContent = `${duration} minutes before`;
+            
+            // Show the calendar event section
+            document.getElementById('calendarEvent').style.display = 'block';
+        }
+        
+        function showManualInstructions() {
+            document.getElementById('manualInstructions').style.display = 'block';
+        }
+        
+        function copyEventDetails() {
+            const eventDetails = document.getElementById('eventDetails').textContent;
+            navigator.clipboard.writeText(eventDetails).then(() => {
+                alert('Event details copied to clipboard!');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = eventDetails;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('Event details copied to clipboard!');
+            });
+        }
+        
+        // Auto-generate on page load
+        window.addEventListener('load', () => {
+            generateCalendarEvent();
+        });
+    </script>
+</body>
+</html>
