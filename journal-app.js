@@ -7,6 +7,7 @@ class JournalApp {
         this.currentEntryId = null;
         this.supabase = null;
         this.supabaseEnabled = false;
+        this.microphonePermissionGranted = false;
         
         this.init();
     }
@@ -16,6 +17,9 @@ class JournalApp {
         
         // Load configuration
         this.loadConfiguration();
+        
+        // Initialize microphone permissions
+        await this.initializeMicrophonePermissions();
         
         // Setup voice recognition
         this.setupVoiceRecognition();
@@ -146,6 +150,10 @@ class JournalApp {
             this.generateTitle();
         });
         
+        document.getElementById('permissionBtn').addEventListener('click', async () => {
+            await this.requestMicrophonePermission();
+        });
+        
         // Save button
         document.getElementById('saveBtn').addEventListener('click', () => {
             this.saveEntry();
@@ -216,10 +224,20 @@ class JournalApp {
         }
     }
 
-    startVoiceInput() {
+    async startVoiceInput() {
         if (!this.recognition) {
             this.updateVoiceStatus('Voice recognition not supported', 'error');
             return;
+        }
+        
+        // Check if we need to request microphone permission
+        if (!this.microphonePermissionGranted) {
+            this.updateVoiceStatus('Requesting microphone permission...', 'listening');
+            const granted = await this.requestMicrophonePermission();
+            if (!granted) {
+                this.updateVoiceStatus('Microphone permission required for voice input', 'error');
+                return;
+            }
         }
         
         try {
@@ -240,12 +258,20 @@ class JournalApp {
 
     updateVoiceButton() {
         const voiceBtn = document.getElementById('voiceBtn');
+        const permissionBtn = document.getElementById('permissionBtn');
+        
         if (this.isListening) {
             voiceBtn.textContent = '🛑 Stop listening';
             voiceBtn.className = 'btn-voice-journal listening';
+            permissionBtn.style.display = 'none';
+        } else if (!this.microphonePermissionGranted) {
+            voiceBtn.textContent = '🎤 Click to start voice input';
+            voiceBtn.className = 'btn-voice-journal idle';
+            permissionBtn.style.display = 'inline-block';
         } else {
             voiceBtn.textContent = '🎤 Click to start voice input';
             voiceBtn.className = 'btn-voice-journal idle';
+            permissionBtn.style.display = 'none';
         }
     }
 
@@ -727,6 +753,52 @@ class JournalApp {
         processed = processed.replace(/(\w+)\s+and\s+(\w+)/g, '$1, and $2');
         
         return processed;
+    }
+    
+    // Initialize microphone permissions
+    async initializeMicrophonePermissions() {
+        try {
+            // Check if Permissions API is supported
+            if ('permissions' in navigator) {
+                const permission = await navigator.permissions.query({ name: 'microphone' });
+                this.microphonePermissionGranted = permission.state === 'granted';
+                
+                console.log('Microphone permission state:', permission.state);
+                
+                // Listen for permission changes
+                permission.addEventListener('change', () => {
+                    this.microphonePermissionGranted = permission.state === 'granted';
+                    console.log('Microphone permission changed to:', permission.state);
+                    this.updateVoiceButton();
+                });
+            } else {
+                console.log('Permissions API not supported, will request permission on first use');
+            }
+        } catch (error) {
+            console.log('Could not check microphone permissions:', error);
+        }
+    }
+    
+    // Request microphone permission proactively
+    async requestMicrophonePermission() {
+        try {
+            // Request microphone access
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            
+            // Stop the stream immediately as we just needed permission
+            stream.getTracks().forEach(track => track.stop());
+            
+            this.microphonePermissionGranted = true;
+            console.log('Microphone permission granted');
+            this.updateVoiceButton();
+            
+            return true;
+        } catch (error) {
+            console.log('Microphone permission denied:', error);
+            this.microphonePermissionGranted = false;
+            this.updateVoiceButton();
+            return false;
+        }
     }
 }
 

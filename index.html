@@ -223,6 +223,24 @@
             transform: none;
         }
         
+        .btn-permission {
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-left: 0.5rem;
+        }
+        
+        .btn-permission:hover {
+            background: #d97706;
+            transform: translateY(-1px);
+        }
+        
         .entries-list {
             margin-top: 2rem;
         }
@@ -591,6 +609,9 @@
             <div class="voice-controls">
                 <button id="voiceBtn" class="btn-voice-journal idle">
                     🎤 Click to start voice input
+                </button>
+                <button id="permissionBtn" class="btn-permission" style="display: none;">
+                    🔒 Grant Microphone Permission
                 </button>
                 <div id="voiceStatus" class="voice-status">
                     <span id="voiceStatusText">Ready to listen</span>
