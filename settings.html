@@ -235,7 +235,19 @@
     <script>
         // Settings page functionality
         document.addEventListener('DOMContentLoaded', async () => {
-            // Wait for journalApp to be available
+            // Test localStorage availability first
+            try {
+                const testKey = 'test_storage_' + Date.now();
+                localStorage.setItem(testKey, 'test');
+                localStorage.removeItem(testKey);
+                console.log('localStorage is working');
+            } catch (error) {
+                console.error('localStorage not available:', error);
+                showStatus('Storage not available. Please check browser settings.', 'error');
+                return;
+            }
+            
+            // Wait for journalApp to be available (but don't require it)
             let attempts = 0;
             while (typeof journalApp === 'undefined' && attempts < 50) {
                 await new Promise(resolve => setTimeout(resolve, 100));
@@ -243,9 +255,7 @@
             }
             
             if (typeof journalApp === 'undefined') {
-                console.error('journalApp not available after waiting');
-                showStatus('App not loaded. Please refresh the page.', 'error');
-                return;
+                console.warn('journalApp not available, using localStorage only');
             }
             
             // Load current settings
@@ -260,22 +270,38 @@
             try {
                 let settings = null;
                 
-                // Try to load using journalApp if available
-                if (typeof journalApp !== 'undefined') {
-                    try {
-                        settings = await journalApp.getNotificationSettings();
-                        console.log('Loaded settings via journalApp:', settings);
-                    } catch (error) {
-                        console.warn('Failed to load via journalApp, trying localStorage fallback:', error);
-                    }
-                }
+                // For Safari PWA, prioritize localStorage
+                const isSafariPWA = window.matchMedia('(display-mode: standalone)').matches && 
+                                   navigator.userAgent.includes('Safari') && 
+                                   !navigator.userAgent.includes('Chrome');
                 
-                // Fallback: load from localStorage
-                if (!settings) {
+                console.log('Is Safari PWA:', isSafariPWA);
+                
+                if (isSafariPWA) {
+                    // Safari PWA: try localStorage first
                     const stored = localStorage.getItem('notificationSettings');
                     if (stored) {
                         settings = JSON.parse(stored);
-                        console.log('Loaded settings from localStorage:', settings);
+                        console.log('Loaded settings from localStorage (Safari PWA):', settings);
+                    }
+                } else {
+                    // Other browsers: try IndexedDB first
+                    if (typeof journalApp !== 'undefined') {
+                        try {
+                            settings = await journalApp.getNotificationSettings();
+                            console.log('Loaded settings via journalApp:', settings);
+                        } catch (error) {
+                            console.warn('Failed to load via journalApp, trying localStorage fallback:', error);
+                        }
+                    }
+                    
+                    // Fallback: load from localStorage
+                    if (!settings) {
+                        const stored = localStorage.getItem('notificationSettings');
+                        if (stored) {
+                            settings = JSON.parse(stored);
+                            console.log('Loaded settings from localStorage:', settings);
+                        }
                     }
                 }
                 
@@ -308,28 +334,40 @@
                 };
                 
                 console.log('Saving settings:', settings);
+                console.log('Browser:', navigator.userAgent);
+                console.log('Is PWA:', window.matchMedia('(display-mode: standalone)').matches);
                 
-                // Try to save using journalApp if available
-                if (typeof journalApp !== 'undefined') {
-                    try {
-                        await journalApp.saveNotificationSettings(settings);
-                        
-                        // Schedule notification if enabled
-                        if (settings.enabled) {
-                            await journalApp.scheduleDailyNotification(settings.time);
+                // Always use localStorage for Safari PWA compatibility
+                try {
+                    localStorage.setItem('notificationSettings', JSON.stringify(settings));
+                    console.log('Settings saved to localStorage successfully');
+                    
+                    // Try to save to IndexedDB if journalApp is available (non-blocking)
+                    if (typeof journalApp !== 'undefined') {
+                        try {
+                            await journalApp.saveNotificationSettings(settings);
+                            console.log('Also saved to IndexedDB successfully');
+                        } catch (indexedError) {
+                            console.warn('IndexedDB save failed, but localStorage worked:', indexedError);
                         }
-                        
-                        showStatus('Settings saved successfully!', 'success');
-                        return;
-                    } catch (error) {
-                        console.warn('Failed to save via journalApp, trying localStorage fallback:', error);
                     }
+                    
+                    // Try to schedule notification if enabled
+                    if (settings.enabled && typeof journalApp !== 'undefined') {
+                        try {
+                            await journalApp.scheduleDailyNotification(settings.time);
+                            console.log('Notification scheduled successfully');
+                        } catch (notifError) {
+                            console.warn('Notification scheduling failed:', notifError);
+                        }
+                    }
+                    
+                    showStatus('Settings saved successfully!', 'success');
+                    
+                } catch (localError) {
+                    console.error('localStorage save failed:', localError);
+                    throw new Error('Failed to save to localStorage: ' + localError.message);
                 }
-                
-                // Fallback: save to localStorage
-                localStorage.setItem('notificationSettings', JSON.stringify(settings));
-                console.log('Settings saved to localStorage as fallback');
-                showStatus('Settings saved successfully! (using fallback storage)', 'success');
                 
             } catch (error) {
                 console.error('Failed to save settings:', error);
