@@ -408,7 +408,7 @@ class JournalApp {
                     id: entry.id,
                     user_id: userId,
                     user_message: entry.content,
-                    ai_response: '', // Empty for journal entries
+                    ai_response: entry.title || '', // Store title in ai_response field for now
                     date: entry.date,
                     created_at: entry.created_at,
                     updated_at: entry.updated_at
@@ -479,6 +479,7 @@ class JournalApp {
                 console.log('Found entries:', data.map(entry => ({
                     id: entry.id,
                     user_id: entry.user_id,
+                    title: entry.ai_response,
                     user_message: entry.user_message?.substring(0, 50) + '...'
                 })));
             } else {
@@ -499,7 +500,7 @@ class JournalApp {
             // Convert Supabase format to local format
             this.entries = data.map(conv => ({
                 id: conv.id,
-                title: `Entry ${new Date(conv.date).toLocaleDateString()}`,
+                title: conv.ai_response || `Entry ${new Date(conv.date).toLocaleDateString()}`,
                 content: conv.user_message,
                 date: conv.date,
                 created_at: conv.created_at,
