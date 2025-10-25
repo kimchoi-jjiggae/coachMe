@@ -59,5 +59,9 @@
   ],
   "categories": ["productivity", "lifestyle", "utilities"],
   "lang": "en",
-  "dir": "ltr"
+  "dir": "ltr",
+  "permissions": ["notifications"],
+  "background": {
+    "scripts": ["sw.js"]
+  }
 }

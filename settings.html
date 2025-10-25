@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Voice Journal</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <style>
+        .settings-page {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .settings-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .settings-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #1f2937;
+        }
+        
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+        
+        .setting-label {
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .setting-description {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.25rem;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #6366f1;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .time-input {
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+        
+        .message-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .btn-test {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .btn-test:hover {
+            background: #059669;
+        }
+        
+        .btn-save {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            width: 100%;
+            margin-top: 1rem;
+        }
+        
+        .btn-save:hover {
+            background: #4f46e5;
+        }
+        
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+        }
+        
+        .back-link:hover {
+            color: #4f46e5;
+        }
+        
+        .status-message {
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            font-weight: 500;
+        }
+        
+        .status-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .status-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-page">
+        <a href="index.html" class="back-link">
+            ← Back to Journal
+        </a>
+        
+        <h1 class="settings-title">Notification Settings</h1>
+        
+        <div class="settings-section">
+            <div class="setting-item">
+                <div>
+                    <div class="setting-label">Daily Reminders</div>
+                    <div class="setting-description">Get reminded to write in your journal every day</div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="notificationsEnabled">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div class="setting-item">
+                <div>
+                    <div class="setting-label">Reminder Time</div>
+                    <div class="setting-description">Choose when you want to be reminded</div>
+                </div>
+                <input type="time" id="notificationTime" class="time-input" value="20:00">
+            </div>
+            
+            <div class="setting-item">
+                <div>
+                    <div class="setting-label">Custom Message</div>
+                    <div class="setting-description">Personalize your reminder message</div>
+                </div>
+            </div>
+            
+            <textarea id="notificationMessage" class="message-input" placeholder="Time for your daily journal reflection! 📝"></textarea>
+            
+            <div class="setting-item">
+                <div>
+                    <div class="setting-label">Test Notification</div>
+                    <div class="setting-description">Send a test notification to make sure it works</div>
+                </div>
+                <button id="testNotification" class="btn-test">Test Now</button>
+            </div>
+        </div>
+        
+        <button id="saveSettings" class="btn-save">Save Settings</button>
+        
+        <div id="statusMessage" class="status-message" style="display: none;"></div>
+    </div>
+    
+    <script src="env-config.js"></script>
+    <script src="journal-app.js"></script>
+    <script>
+        // Settings page functionality
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Load current settings
+            await loadSettings();
+            
+            // Set up event listeners
+            document.getElementById('saveSettings').addEventListener('click', saveSettings);
+            document.getElementById('testNotification').addEventListener('click', testNotification);
+        });
+        
+        async function loadSettings() {
+            try {
+                const settings = await journalApp.getNotificationSettings();
+                
+                document.getElementById('notificationsEnabled').checked = settings.enabled;
+                document.getElementById('notificationTime').value = settings.time;
+                document.getElementById('notificationMessage').value = settings.message;
+                
+                console.log('Loaded settings:', settings);
+            } catch (error) {
+                console.error('Failed to load settings:', error);
+                showStatus('Failed to load settings', 'error');
+            }
+        }
+        
+        async function saveSettings() {
+            try {
+                const settings = {
+                    enabled: document.getElementById('notificationsEnabled').checked,
+                    time: document.getElementById('notificationTime').value,
+                    message: document.getElementById('notificationMessage').value
+                };
+                
+                await journalApp.saveNotificationSettings(settings);
+                
+                // Schedule notification if enabled
+                if (settings.enabled) {
+                    await journalApp.scheduleDailyNotification(settings.time);
+                }
+                
+                showStatus('Settings saved successfully!', 'success');
+            } catch (error) {
+                console.error('Failed to save settings:', error);
+                showStatus('Failed to save settings', 'error');
+            }
+        }
+        
+        async function testNotification() {
+            try {
+                await journalApp.testNotification();
+                showStatus('Test notification sent!', 'success');
+            } catch (error) {
+                console.error('Failed to send test notification:', error);
+                showStatus('Failed to send test notification', 'error');
+            }
+        }
+        
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-message status-${type}`;
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

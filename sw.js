@@ -1,19 +1,35 @@
-// Simple Service Worker for Voice Journal PWA
-const CACHE_NAME = 'voice-journal-v3';
+// Service Worker for Voice Journal PWA
+// Handles background notifications and offline functionality
 
-// Install event - minimal caching
-self.addEventListener('install', (event) => {
-  console.log('Service worker installing...');
-  self.skipWaiting();
+const CACHE_NAME = 'voice-journal-v1';
+const urlsToCache = [
+  './',
+  './index.html',
+  './journal-app.js',
+  './env-config.js',
+  './style.css',
+  './manifest.json'
+];
+
+// Install event - cache resources
+self.addEventListener('install', event => {
+  console.log('Service Worker installing...');
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('Caching app shell');
+        return cache.addAll(urlsToCache);
+      })
+  );
 });
 
 // Activate event - clean up old caches
-self.addEventListener('activate', (event) => {
-  console.log('Service worker activating...');
+self.addEventListener('activate', event => {
+  console.log('Service Worker activating...');
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys().then(cacheNames => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
+        cacheNames.map(cacheName => {
           if (cacheName !== CACHE_NAME) {
             console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
@@ -22,95 +38,132 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
-  self.clients.claim();
 });
 
-// Fetch event - PWA scope handling
-self.addEventListener('fetch', (event) => {
-  // Only handle requests from our domain
-  if (!event.request.url.includes('kimchoi-jjiggae.github.io/coachMe/')) {
-    return;
-  }
-  
-  // Handle navigation requests specially for PWA
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          // Cache successful navigation responses
-          if (response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          // For navigation requests, try multiple fallback strategies
-          return caches.match('./index.html').then((response) => {
-            if (response) {
-              return response;
-            }
-            // Try to fetch index.html directly
-            return fetch('./index.html').then((response) => {
-              if (response.ok) {
-                return response;
-              }
-              // Ultimate fallback with proper redirect
-              return new Response(`
-                <!DOCTYPE html>
-                <html>
-                  <head>
-                    <title>Voice Journal</title>
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <meta name="theme-color" content="#6366f1">
-                    <script>
-                      // Force redirect to the correct path
-                      window.location.href = 'https://kimchoi-jjiggae.github.io/coachMe/index.html';
-                    </script>
-                  </head>
-                  <body style="font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5;">
-                    <h1>🎙️ Voice Journal</h1>
-                    <p>Redirecting to your journal...</p>
-                  </body>
-                </html>
-              `, {
-                headers: { 'Content-Type': 'text/html' }
-              });
-            });
-          });
-        })
-    );
-    return;
-  }
-  
-  // Handle other requests with path fixing
-  let requestUrl = event.request.url;
-  
-  // Fix common PWA path issues
-  if (requestUrl.includes('kimchoi-jjiggae.github.io/coachMe/')) {
-    // Ensure the request has the correct path
-    if (!requestUrl.endsWith('/') && !requestUrl.includes('.')) {
-      requestUrl = requestUrl + '/index.html';
-    }
-  }
-  
+// Fetch event - serve from cache, fallback to network
+self.addEventListener('fetch', event => {
   event.respondWith(
-    fetch(requestUrl)
-      .then((response) => {
-        // If successful, cache and return the response
-        if (response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
-        }
-        return response;
-      })
-      .catch(() => {
-        // If network fails, try to serve from cache
-        return caches.match(event.request);
+    caches.match(event.request)
+      .then(response => {
+        // Return cached version or fetch from network
+        return response || fetch(event.request);
       })
   );
 });
+
+// Background sync for notifications
+self.addEventListener('sync', event => {
+  if (event.tag === 'journal-reminder') {
+    console.log('Background sync: Journal reminder');
+    event.waitUntil(sendJournalReminder());
+  }
+});
+
+// Handle notification clicks
+self.addEventListener('notificationclick', event => {
+  console.log('Notification clicked:', event.notification.tag);
+  
+  event.notification.close();
+  
+  // Open the app
+  event.waitUntil(
+    clients.openWindow('./')
+  );
+});
+
+// Send journal reminder notification
+async function sendJournalReminder() {
+  try {
+    // Get notification settings from IndexedDB
+    const settings = await getNotificationSettings();
+    
+    if (settings.enabled) {
+      const options = {
+        body: settings.message || "Time for your daily journal reflection! 📝",
+        icon: './icons/icon-192x192.svg',
+        badge: './icons/icon-72x72.svg',
+        tag: 'journal-reminder',
+        requireInteraction: true,
+        actions: [
+          {
+            action: 'open',
+            title: 'Write Entry',
+            icon: './icons/icon-72x72.svg'
+          },
+          {
+            action: 'later',
+            title: 'Remind Later',
+            icon: './icons/icon-72x72.svg'
+          }
+        ]
+      };
+      
+      return self.registration.showNotification('Voice Journal Reminder', options);
+    }
+  } catch (error) {
+    console.error('Error sending journal reminder:', error);
+  }
+}
+
+// Get notification settings from IndexedDB
+async function getNotificationSettings() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('VoiceJournalDB', 1);
+    
+    request.onerror = () => reject(request.error);
+    
+    request.onsuccess = () => {
+      const db = request.result;
+      const transaction = db.transaction(['settings'], 'readonly');
+      const store = transaction.objectStore('settings');
+      const getRequest = store.get('notificationSettings');
+      
+      getRequest.onsuccess = () => {
+        resolve(getRequest.result || {
+          enabled: true,
+          time: '20:00',
+          message: "Time for your daily journal reflection! 📝"
+        });
+      };
+      
+      getRequest.onerror = () => reject(getRequest.error);
+    };
+    
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains('settings')) {
+        db.createObjectStore('settings');
+      }
+    };
+  });
+}
+
+// Schedule daily notifications
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SCHEDULE_NOTIFICATION') {
+    scheduleDailyNotification(event.data.time);
+  }
+});
+
+// Schedule notification for specific time
+function scheduleDailyNotification(time) {
+  const [hours, minutes] = time.split(':').map(Number);
+  const now = new Date();
+  const scheduledTime = new Date();
+  scheduledTime.setHours(hours, minutes, 0, 0);
+  
+  // If time has passed today, schedule for tomorrow
+  if (scheduledTime <= now) {
+    scheduledTime.setDate(scheduledTime.getDate() + 1);
+  }
+  
+  const delay = scheduledTime.getTime() - now.getTime();
+  
+  setTimeout(() => {
+    sendJournalReminder();
+    // Schedule next day
+    scheduleDailyNotification(time);
+  }, delay);
+  
+  console.log('Scheduled notification for:', scheduledTime);
+}

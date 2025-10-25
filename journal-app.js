@@ -44,6 +44,9 @@ class JournalApp {
             this.setRandomPrompt();
         }, 100);
         
+        // Initialize notifications
+        this.initializeNotifications();
+        
         console.log('Journal App initialized successfully');
     }
 
@@ -96,6 +99,158 @@ class JournalApp {
             console.log('Set prompt:', randomPrompt);
         } else {
             console.log('Could not set prompt - textarea or prompts not available');
+        }
+    }
+    
+    // Initialize notification system
+    async initializeNotifications() {
+        // Check if notifications are supported
+        if (!('Notification' in window)) {
+            console.log('This browser does not support notifications');
+            return;
+        }
+        
+        // Check if service worker is supported
+        if (!('serviceWorker' in navigator)) {
+            console.log('This browser does not support service workers');
+            return;
+        }
+        
+        // Register service worker
+        try {
+            const registration = await navigator.serviceWorker.register('./sw.js');
+            console.log('Service Worker registered successfully:', registration);
+            
+            // Request notification permission
+            if (Notification.permission === 'default') {
+                const permission = await Notification.requestPermission();
+                console.log('Notification permission:', permission);
+            }
+            
+            // Load notification settings
+            await this.loadNotificationSettings();
+            
+        } catch (error) {
+            console.error('Service Worker registration failed:', error);
+        }
+    }
+    
+    // Load notification settings from IndexedDB
+    async loadNotificationSettings() {
+        try {
+            const settings = await this.getNotificationSettings();
+            this.notificationSettings = settings;
+            console.log('Loaded notification settings:', settings);
+        } catch (error) {
+            console.error('Failed to load notification settings:', error);
+            // Set default settings
+            this.notificationSettings = {
+                enabled: true,
+                time: '20:00',
+                message: "Time for your daily journal reflection! 📝"
+            };
+        }
+    }
+    
+    // Get notification settings from IndexedDB
+    async getNotificationSettings() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('VoiceJournalDB', 1);
+            
+            request.onerror = () => reject(request.error);
+            
+            request.onsuccess = () => {
+                const db = request.result;
+                const transaction = db.transaction(['settings'], 'readonly');
+                const store = transaction.objectStore('settings');
+                const getRequest = store.get('notificationSettings');
+                
+                getRequest.onsuccess = () => {
+                    resolve(getRequest.result || {
+                        enabled: true,
+                        time: '20:00',
+                        message: "Time for your daily journal reflection! 📝"
+                    });
+                };
+                
+                getRequest.onerror = () => reject(getRequest.error);
+            };
+            
+            request.onupgradeneeded = () => {
+                const db = request.result;
+                if (!db.objectStoreNames.contains('settings')) {
+                    db.createObjectStore('settings');
+                }
+            };
+        });
+    }
+    
+    // Save notification settings to IndexedDB
+    async saveNotificationSettings(settings) {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('VoiceJournalDB', 1);
+            
+            request.onerror = () => reject(request.error);
+            
+            request.onsuccess = () => {
+                const db = request.result;
+                const transaction = db.transaction(['settings'], 'readwrite');
+                const store = transaction.objectStore('settings');
+                const putRequest = store.put(settings, 'notificationSettings');
+                
+                putRequest.onsuccess = () => {
+                    this.notificationSettings = settings;
+                    resolve();
+                };
+                
+                putRequest.onerror = () => reject(putRequest.error);
+            };
+            
+            request.onupgradeneeded = () => {
+                const db = request.result;
+                if (!db.objectStoreNames.contains('settings')) {
+                    db.createObjectStore('settings');
+                }
+            };
+        });
+    }
+    
+    // Schedule daily notification
+    async scheduleDailyNotification(time) {
+        if (!this.notificationSettings.enabled) {
+            console.log('Notifications are disabled');
+            return;
+        }
+        
+        try {
+            // Send message to service worker to schedule notification
+            if (navigator.serviceWorker.controller) {
+                navigator.serviceWorker.controller.postMessage({
+                    type: 'SCHEDULE_NOTIFICATION',
+                    time: time
+                });
+                console.log('Scheduled daily notification for:', time);
+            }
+        } catch (error) {
+            console.error('Failed to schedule notification:', error);
+        }
+    }
+    
+    // Test notification (for settings page)
+    async testNotification() {
+        if (Notification.permission === 'granted') {
+            const notification = new Notification('Voice Journal Test', {
+                body: 'This is a test notification from Voice Journal!',
+                icon: './icons/icon-192x192.svg',
+                tag: 'test-notification'
+            });
+            
+            notification.onclick = () => {
+                window.focus();
+                notification.close();
+            };
+        } else {
+            alert('Please enable notifications in your browser settings to receive journal reminders.');
         }
     }
 
