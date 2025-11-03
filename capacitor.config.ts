@@ -3,7 +3,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.michellechoi.voicejournal',
   appName: 'Voice Journal',
-  webDir: '.',
+  webDir: 'dist',
   server: {
     androidScheme: 'https'
   },

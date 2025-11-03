@@ -129,3 +129,5 @@ Add this to `ios/App/App/Info.plist`:
 **Your Voice Journal is ready to become a real iOS app! 🚀**
 
 **Follow these steps and you'll have it on TestFlight in about 30 minutes!** 📱✨
+
+
