@@ -173,6 +173,20 @@
             transform: scale(0.95);
         }
         
+        .sensei-sparkle-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .sensei-sparkle-btn svg.spinning {
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
         .sensei-content-input {
             width: 100%;
             min-height: 200px;
