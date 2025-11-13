@@ -940,21 +940,53 @@ class JournalApp {
     async generateTitleWithOpenAI(content) {
         // Determine API endpoint based on environment
         const isGitHubPages = window.location.hostname.includes('github.io');
-        const isLocalhost = window.location.hostname.includes('localhost');
+        const isLocalhost = window.location.hostname.includes('localhost') || window.location.hostname === '127.0.0.1';
+        
+        // Multiple ways to detect Capacitor/iOS app
+        const isCapacitor = window.Capacitor !== undefined || 
+                           window.capacitor !== undefined ||
+                           window.CapacitorPlugins !== undefined ||
+                           (window.navigator && window.navigator.userAgent && window.navigator.userAgent.includes('Capacitor')) ||
+                           (window.location.protocol === 'capacitor:' || window.location.protocol === 'capacitor-http:');
+        
+        // Also check if we're in a native app context (iOS/Android)
+        const isNativeApp = !isLocalhost && 
+                           !isGitHubPages && 
+                           (window.location.protocol === 'capacitor:' || 
+                            window.location.protocol === 'capacitor-http:' ||
+                            window.location.protocol === 'file:' ||
+                            (window.navigator && window.navigator.standalone !== undefined));
+        
+        // Use Vercel for native apps, GitHub Pages, or if Capacitor is detected
+        const shouldUseVercel = isGitHubPages || isCapacitor || isNativeApp;
         
         let apiUrl;
-        if (isGitHubPages) {
-            // Use Vercel serverless function for GitHub Pages
+        if (shouldUseVercel) {
+            // Use Vercel serverless function for GitHub Pages and iOS/Android apps
             apiUrl = 'https://coach-me-1wtt.vercel.app/api/generate-title';
+            console.log('Using Vercel API (detected native app or Capacitor)');
         } else if (isLocalhost) {
             // Use local server for development
             apiUrl = '/api/generate-title';
+            console.log('Using local server API');
         } else {
             // Try local server first, fallback to Vercel
             apiUrl = '/api/generate-title';
+            console.log('Trying local server, will fallback to Vercel if needed');
         }
         
         try {
+            console.log('Generating title with OpenAI');
+            console.log('Environment detection:', {
+                isGitHubPages,
+                isLocalhost,
+                isCapacitor,
+                isNativeApp,
+                protocol: window.location.protocol,
+                hostname: window.location.hostname,
+                userAgent: window.navigator?.userAgent?.substring(0, 50)
+            });
+            console.log('Using API:', apiUrl);
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
@@ -964,19 +996,25 @@ class JournalApp {
             });
             
             if (!response.ok) {
-                const errorData = await response.json();
+                const errorData = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+                console.error('API error response:', errorData);
                 throw new Error(errorData.error || `API error: ${response.status}`);
             }
             
             const data = await response.json();
+            if (!data.title) {
+                throw new Error('No title in response');
+            }
+            
+            console.log('Title generated successfully:', data.title);
             return data.title;
             
         } catch (error) {
             console.error('API error:', error);
             
-            // If local server fails and we're not on GitHub Pages, try Vercel
-            if (!isGitHubPages && !isLocalhost && apiUrl === '/api/generate-title') {
-                console.log('Trying Vercel API as fallback...');
+            // If local server fails and we're not already using Vercel, try Vercel as fallback
+            if (!shouldUseVercel && !isLocalhost && apiUrl === '/api/generate-title') {
+                console.log('Local API failed, trying Vercel API as fallback...');
                 try {
                     const vercelResponse = await fetch('https://coach-me-1wtt.vercel.app/api/generate-title', {
                         method: 'POST',
@@ -988,11 +1026,20 @@ class JournalApp {
                     
                     if (vercelResponse.ok) {
                         const vercelData = await vercelResponse.json();
-                        return vercelData.title;
+                        if (vercelData.title) {
+                            console.log('Title generated via Vercel fallback:', vercelData.title);
+                            return vercelData.title;
+                        }
+                    } else {
+                        const errorData = await vercelResponse.json().catch(() => ({}));
+                        console.error('Vercel API error:', errorData);
                     }
                 } catch (vercelError) {
-                    console.log('Vercel API also failed:', vercelError);
+                    console.error('Vercel API also failed:', vercelError);
                 }
+            } else if (shouldUseVercel) {
+                // If we were already using Vercel and it failed, log the error
+                console.error('Vercel API call failed. Check network connection and Vercel function status.');
             }
             
             throw new Error(`Title generation failed: ${error.message}`);
