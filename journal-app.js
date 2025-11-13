@@ -399,18 +399,23 @@ class JournalApp {
             this.clearEntry();
         });
         
-        // Refresh button
-        document.getElementById('refreshBtn').addEventListener('click', () => {
-            this.loadEntries();
-        });
+        // Refresh button (if exists)
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.loadEntries();
+            });
+        }
         
         // Auto-save on content change
         document.getElementById('entryContent').addEventListener('input', () => {
             this.autoSaveDraft();
+            this.updateActionsVisibility();
         });
         
         document.getElementById('entryTitle').addEventListener('input', () => {
             this.autoSaveDraft();
+            this.updateActionsVisibility();
         });
     }
 
@@ -494,19 +499,26 @@ class JournalApp {
     updateVoiceButton() {
         const voiceBtn = document.getElementById('voiceBtn');
         const permissionBtn = document.getElementById('permissionBtn');
+        const voiceStatus = document.getElementById('voiceStatus');
+        const voiceStatusText = document.getElementById('voiceStatusText');
         
         if (this.isListening) {
-            voiceBtn.textContent = '🛑 Stop listening';
-            voiceBtn.className = 'btn-voice-journal listening';
-            permissionBtn.style.display = 'none';
+            voiceBtn.classList.add('listening');
+            voiceBtn.classList.remove('idle');
+            if (voiceStatus) voiceStatus.style.display = 'block';
+            if (voiceStatusText) voiceStatusText.textContent = 'Listening...';
+            if (permissionBtn) permissionBtn.style.display = 'none';
         } else if (!this.microphonePermissionGranted) {
-            voiceBtn.textContent = '🎤 Click to start voice input';
-            voiceBtn.className = 'btn-voice-journal idle';
-            permissionBtn.style.display = 'inline-block';
+            voiceBtn.classList.remove('listening');
+            voiceBtn.classList.add('idle');
+            if (voiceStatus) voiceStatus.style.display = 'none';
+            if (permissionBtn) permissionBtn.style.display = 'block';
         } else {
-            voiceBtn.textContent = '🎤 Click to start voice input';
-            voiceBtn.className = 'btn-voice-journal idle';
-            permissionBtn.style.display = 'none';
+            voiceBtn.classList.remove('listening');
+            voiceBtn.classList.add('idle');
+            if (voiceStatus) voiceStatus.style.display = 'none';
+            if (voiceStatusText) voiceStatusText.textContent = 'Ready to listen';
+            if (permissionBtn) permissionBtn.style.display = 'none';
         }
     }
 
@@ -570,8 +582,28 @@ class JournalApp {
         this.currentEntryId = null;
         localStorage.removeItem('journalDraft');
         
+        // Hide actions when form is cleared
+        const actions = document.querySelector('.sensei-actions');
+        if (actions) {
+            actions.style.display = 'none';
+        }
+        
         // Set a new random prompt for the next entry
         this.setRandomPrompt();
+    }
+
+    updateActionsVisibility() {
+        const title = document.getElementById('entryTitle').value.trim();
+        const content = document.getElementById('entryContent').value.trim();
+        const actions = document.querySelector('.sensei-actions');
+        
+        if (actions) {
+            if (title || content) {
+                actions.style.display = 'flex';
+            } else {
+                actions.style.display = 'none';
+            }
+        }
     }
 
     async saveEntry() {
@@ -767,31 +799,112 @@ class JournalApp {
             return;
         }
         
+        // Format date as "Nov 11" style
+        const formatDate = (dateString) => {
+            const date = new Date(dateString);
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return `${months[date.getMonth()]} ${date.getDate()}`;
+        };
+        
+        // Get title or first part of content
+        const getEntryTitle = (entry) => {
+            if (entry.title && entry.title.trim()) {
+                return entry.title;
+            }
+            // Use first 80 characters of content
+            const content = entry.content || '';
+            return content.substring(0, 80) + (content.length > 80 ? '...' : '');
+        };
+        
         container.innerHTML = this.entries.map(entry => `
-            <div class="entry-item">
-                <div class="entry-item-header">
-                    <h3 class="entry-item-title">${this.escapeHtml(entry.title)}</h3>
-                    <div class="entry-item-date">${new Date(entry.date).toLocaleString()}</div>
-                </div>
-                <div class="entry-item-content">${this.escapeHtml(entry.content)}</div>
-                <div class="entry-item-actions">
-                    <button class="btn-edit" onclick="journalApp.editEntry('${entry.id}')" title="Edit entry">✏️</button>
-                    <button class="btn-delete" onclick="journalApp.deleteEntry('${entry.id}')" title="Delete entry">🗑️</button>
-                </div>
+            <div class="sensei-entry-item">
+                <a href="#" class="sensei-entry-content" onclick="event.preventDefault(); journalApp.editEntry('${entry.id}');">
+                    <div class="sensei-entry-title">${this.escapeHtml(getEntryTitle(entry))}</div>
+                    <div class="sensei-entry-date">${formatDate(entry.date)}</div>
+                </a>
+                <button class="sensei-entry-chevron" onclick="event.stopPropagation(); journalApp.viewEntry('${entry.id}');" aria-label="View full entry">›</button>
             </div>
         `).join('');
+    }
+
+    viewEntry(entryId) {
+        const entry = this.entries.find(e => e.id === entryId);
+        if (!entry) return;
+        
+        // Format date
+        const date = new Date(entry.date);
+        const formattedDate = date.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+        });
+        
+        // Populate modal
+        document.getElementById('modalTitle').textContent = entry.title || 'Untitled Entry';
+        document.getElementById('modalDate').textContent = formattedDate;
+        document.getElementById('modalContent').textContent = entry.content || '';
+        
+        // Set up edit and delete buttons
+        const editBtn = document.getElementById('modalEditBtn');
+        const deleteBtn = document.getElementById('modalDeleteBtn');
+        
+        editBtn.onclick = () => {
+            this.closeEntryModal();
+            this.editEntry(entryId);
+        };
+        
+        deleteBtn.onclick = () => {
+            this.closeEntryModal();
+            this.deleteEntry(entryId);
+        };
+        
+        // Show modal
+        const modal = document.getElementById('entryModal');
+        modal.classList.add('open');
+        
+        // Close on background click
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                this.closeEntryModal();
+            }
+        };
+        
+        // Close on Escape key (use a one-time listener)
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('open')) {
+                this.closeEntryModal();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+    }
+    
+    closeEntryModal() {
+        const modal = document.getElementById('entryModal');
+        modal.classList.remove('open');
     }
 
     editEntry(entryId) {
         const entry = this.entries.find(e => e.id === entryId);
         if (!entry) return;
         
-        document.getElementById('entryTitle').value = entry.title;
-        document.getElementById('entryContent').value = entry.content;
+        document.getElementById('entryTitle').value = entry.title || '';
+        document.getElementById('entryContent').value = entry.content || '';
         this.currentEntryId = entryId;
         
+        // Show actions when editing
+        const actions = document.querySelector('.sensei-actions');
+        if (actions) {
+            actions.style.display = 'flex';
+        }
+        
         // Scroll to form
-        document.querySelector('.entry-form').scrollIntoView({ behavior: 'smooth' });
+        const form = document.querySelector('.sensei-form');
+        if (form) {
+            form.scrollIntoView({ behavior: 'smooth' });
+        }
     }
 
     async deleteEntry(entryId) {
