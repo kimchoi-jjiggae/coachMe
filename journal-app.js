@@ -1024,7 +1024,15 @@ class JournalApp {
         // Disable button while generating
         const generateBtn = document.getElementById('generateTitleBtn');
         generateBtn.disabled = true;
-        generateBtn.textContent = '🔄 Generating...';
+        
+        // Show loading spinner icon
+        generateBtn.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="spinning">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 6v6l4 2"></path>
+            </svg>
+        `;
+        generateBtn.style.opacity = '0.6';
         
         try {
             // Try OpenAI first, fallback to local generation
@@ -1032,6 +1040,8 @@ class JournalApp {
             
             // Update the title field
             titleField.value = title;
+            this.autoSaveDraft();
+            this.updateActionsVisibility();
             
             this.showMessage('Title generated successfully!', 'success');
         } catch (error) {
@@ -1040,13 +1050,20 @@ class JournalApp {
             // Fallback to local title generation
             const fallbackTitle = this.createSmartTitle(content);
             titleField.value = fallbackTitle;
+            this.autoSaveDraft();
+            this.updateActionsVisibility();
             
             this.showMessage('Title generated (using local method)', 'info');
         }
         
-        // Re-enable button
+        // Re-enable button and restore sparkle icon
         generateBtn.disabled = false;
-        generateBtn.textContent = '📝 Generate Title';
+        generateBtn.style.opacity = '1';
+        generateBtn.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"></path>
+            </svg>
+        `;
     }
     
     // Generate title using OpenAI API (supports both local server and Vercel)
